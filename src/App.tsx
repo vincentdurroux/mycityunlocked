@@ -83,7 +83,6 @@ import {
   Ban
 } from 'lucide-react';
 import { storageService } from './lib/storage';
-import { SafeImage } from './components/SafeImage';
 import { marketplaceService, Ad } from './services/marketplaceService';
 import { compressImage } from './services/imageService';
 import { motion, AnimatePresence } from 'motion/react';
@@ -2341,11 +2340,7 @@ function RecommendationItem({ rec, onUpdate, onStartAdding }: { rec: any, onUpda
         <div className="flex gap-4 w-full sm:w-auto">
           {rec.pro_image_url && (
             <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-100 shadow-sm">
-                <SafeImage 
-                  src={rec.pro_image_url} 
-                  alt="" 
-                  className="w-full h-full" 
-                />
+              <img src={rec.pro_image_url} alt="" className="w-full h-full object-cover" />
             </div>
           )}
           <div className="min-w-0 flex-1">
@@ -5534,11 +5529,7 @@ function AdminView({
                         {cat.articles.map((art) => (
                           <div key={art.id} className="p-4 rounded-2xl border border-slate-100 hover:border-slate-200 bg-slate-50/10 hover:bg-slate-50/50 transition-all flex flex-col md:flex-row gap-4 items-start md:items-center">
                             {art.imageUrl && (
-                              <SafeImage 
-                                src={art.imageUrl} 
-                                alt={art.title} 
-                                className="w-20 h-16 rounded-xl shrink-0" 
-                              />
+                              <img src={art.imageUrl} alt={art.title} className="w-20 h-16 object-cover rounded-xl bg-slate-100 shrink-0 border border-slate-100" referrerPolicy="no-referrer" />
                             )}
                             <div className="min-w-0 flex-1 text-left space-y-1">
                               <div className="flex flex-wrap items-center gap-2">
@@ -5731,11 +5722,7 @@ function ProfileSetupView({ currentUser, onComplete }: { currentUser: any, onCom
                 >
                   <div className="w-24 h-24 rounded-[32px] bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden flex items-center justify-center group-hover:border-brand-blue group-hover:bg-brand-blue/5 transition-all">
                     {avatarPreview ? (
-                    <SafeImage 
-                      src={avatarPreview} 
-                      alt="Preview" 
-                      className="w-full h-full" 
-                    />
+                      <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
                       <Camera className="w-8 h-8 text-slate-300 group-hover:text-brand-blue transition-colors" />
                     )}
@@ -6179,7 +6166,7 @@ function HomeView({
       <div 
         className="w-full flex justify-center -mb-2 relative z-0 h-[80px] md:h-[135px]"
       >
-        <SafeImage 
+        <img 
           src="/people.jpg" 
           alt="Our Community" 
           className="w-[70%] md:w-[35%] h-full object-contain block"
@@ -6226,11 +6213,7 @@ function HomeView({
               <div className="absolute inset-0 bg-gradient-to-tr from-brand-blue to-brand-yellow rounded-full animate-pulse opacity-10 blur-2xl" />
               <div className="relative z-10 w-full h-full rounded-full border-2 border-slate-100 p-4 backdrop-blur-sm">
                 <div className="w-full h-full rounded-full overflow-hidden border-4 border-white shadow-2xl">
-          <SafeImage 
-            src="/valencia.jpg" 
-            alt="Valencia City" 
-            className="w-full h-full" 
-          />
+                   <img src="/valencia.jpg" alt="Valencia City" className="w-full h-full object-cover" />
                 </div>
               </div>
 
@@ -6713,12 +6696,7 @@ function ExpertGuideModal({ isOpen, onClose, article }: { isOpen: boolean, onClo
                 <div className="flex items-center gap-4 py-6 border-b border-slate-100 mb-6">
                   <div className="w-12 h-12 rounded-full border-2 border-brand-yellow/20 flex items-center justify-center bg-slate-50 overflow-hidden flex-shrink-0">
                     {article.author?.avatarUrl ? (
-                      <SafeImage 
-                        src={article.author.avatarUrl} 
-                        alt={authorName || businessName} 
-                        className="w-full h-full" 
-                        fallbackSrc={`https://ui-avatars.com/api/?name=${encodeURIComponent(authorName || "User")}&background=f1f5f9&color=475569`}
-                      />
+                      <img src={article.author.avatarUrl} alt={authorName || businessName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     ) : (
                       <User className="w-6 h-6 text-slate-300" />
                     )}
@@ -6834,11 +6812,7 @@ function ExpertGuidesPartners({ onReadFullGuide }: { onReadFullGuide: () => void
           {/* Visual Side */}
           <div className="md:w-1/3 h-48 md:h-auto relative overflow-hidden bg-brand-blue/5 flex items-center justify-center">
             {featuredGuide.brandImage ? (
-              <SafeImage 
-                src={featuredGuide.brandImage || undefined} 
-                alt="Valencia neighborhoods" 
-                className="w-full h-full transition-transform duration-700 group-hover:scale-105" 
-              />
+              <img src={featuredGuide.brandImage} alt="Valencia neighborhoods" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
             ) : (
               <MapPin className="w-12 h-12 text-brand-blue/10" />
             )}
@@ -7812,11 +7786,7 @@ ${JSON.stringify(proListBrief, null, 2)}`,
                   
                   <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-slate-50 overflow-hidden flex-shrink-0 border border-slate-100 shadow-sm group-hover:scale-105 transition-transform duration-700 flex items-center justify-center">
                     {pro.image ? (
-                <SafeImage 
-                  src={pro.image} 
-                  alt={pro.name} 
-                  className="w-full h-full" 
-                />
+                      <img src={pro.image} alt={pro.name} className="w-full h-full object-cover" />
                     ) : (
                       <User className="w-1/2 h-1/2 text-slate-200" />
                     )}
@@ -8563,12 +8533,7 @@ function MessagesView({
                   )}
                 >
                   <div className="relative flex-shrink-0">
-                    <SafeImage 
-                      src={otherAvatar} 
-                      alt="" 
-                      className="w-11 h-11 rounded-full border border-slate-100" 
-                      fallbackSrc={`https://ui-avatars.com/api/?name=${encodeURIComponent(displayedName || "User")}&background=f1f5f9&color=475569`}
-                    />
+                    <img src={otherAvatar} alt="" className="w-11 h-11 rounded-full object-cover border border-slate-100" />
                     {isBlockedLocally && (
                       <div className="absolute -bottom-1 -right-1 bg-rose-500 text-white p-0.5 rounded-full border border-white">
                         <Ban className="w-3 h-3" />
@@ -9087,11 +9052,7 @@ function ProfessionalDetailView({
           <div className="flex flex-col md:flex-row gap-6 md:items-end mb-10">
             <div className="w-36 h-36 md:w-44 md:h-44 rounded-[32px] bg-white p-1.5 overflow-hidden shadow-2xl border-4 border-white ring-1 ring-slate-100 group flex items-center justify-center">
               {pro.image ? (
-            <SafeImage 
-              src={pro.image} 
-              alt={pro.name} 
-              className="w-full h-full rounded-[24px] group-hover:scale-110 transition-transform duration-700" 
-            />
+                <img src={pro.image} alt={pro.name} className="w-full h-full object-cover rounded-[24px] group-hover:scale-110 transition-transform duration-700" />
               ) : (
                 <User className="w-20 h-20 text-slate-200" />
               )}
@@ -9555,11 +9516,7 @@ function EventsView({ initialEventId, onModalClose, scrollToTop, events: propEve
             onClick={() => setSelectedEvent(event)}
           >
             <div className="h-40 overflow-hidden relative">
-            <SafeImage 
-              src={event.image} 
-              alt={event.title} 
-              className="w-full h-full group-hover:scale-105 transition-transform duration-500" 
-            />
+              <img src={event.image} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-center min-w-[50px]">
                 <p className="text-[10px] font-bold text-brand-blue uppercase">
                   {event.start_date || event.date}
@@ -10390,12 +10347,7 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
           className="relative w-24 h-24 rounded-full bg-brand-blue/10 border-4 border-white shadow-sm overflow-hidden mb-4 flex items-center justify-center cursor-pointer group"
         >
           {userProfile?.avatar_url ? (
-            <SafeImage 
-              src={userProfile.avatar_url} 
-              alt="" 
-              className="w-full h-full group-hover:opacity-50 transition-opacity" 
-              fallbackSrc={`https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile.full_name || "User")}&background=f1f5f9&color=475569`}
-            />
+            <img src={userProfile.avatar_url} alt="" className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
           ) : (
             <User className="w-12 h-12 text-brand-blue group-hover:opacity-50 transition-opacity" />
           )}
@@ -10811,12 +10763,7 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
                           className="p-4 flex gap-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-2xl cursor-pointer transition-all active:scale-[0.98]"
                         >
                           <div className="relative flex-shrink-0">
-                            <SafeImage 
-                              src={otherAvatar} 
-                              alt="" 
-                              className="w-10 h-10 rounded-full border border-slate-100" 
-                              fallbackSrc={`https://ui-avatars.com/api/?name=${encodeURIComponent(displayedName || "User")}&background=f1f5f9&color=475569`}
-                            />
+                            <img src={otherAvatar} alt="" className="w-10 h-10 rounded-full object-cover border border-slate-100" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-start">

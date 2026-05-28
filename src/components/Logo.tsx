@@ -1,6 +1,5 @@
 import React from 'react';
 import { cn } from '../lib/utils';
-import { SafeImage } from './SafeImage';
 
 interface LogoProps {
   className?: string;
@@ -10,11 +9,11 @@ interface LogoProps {
 export function Logo({ className, showTagline = false }: LogoProps) {
   return (
     <div className={cn("flex flex-col items-center flex-shrink-0", className)}>
-      <SafeImage 
+      <img 
         src="/logo.png?v=3" 
         alt="Unlocked Logo" 
-        className="h-10 md:h-14 w-auto object-contain flex-shrink-0 bg-transparent"
-        fallbackSrc="/logo.png"
+        className="h-10 md:h-14 w-auto object-contain flex-shrink-0"
+        referrerPolicy="no-referrer"
       />
 
       {showTagline && (
