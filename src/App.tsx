@@ -1131,13 +1131,6 @@ export default function App() {
       if (session?.user) {
         setCurrentUser(session.user);
         
-        // If it's a new signup, force profile completion
-        if (event === 'SIGNED_UP') {
-          setActiveView('complete-profile');
-          setAuthLoading(false);
-          return;
-        }
-        
         loadProfile(session.user.id);
       } else {
         setCurrentUser(null);
@@ -1167,7 +1160,11 @@ export default function App() {
     try {
       const profile = await authService.getProfile(userId);
       setUserProfile(profile);
-      if (!profile || !profile.full_name) {
+      // If profile is new (created_at == updated_at) or name is missing, force onboarding
+      const isNewProfile = profile && profile.created_at && profile.updated_at && 
+                           Math.abs(new Date(profile.created_at).getTime() - new Date(profile.updated_at).getTime()) < 1000;
+      
+      if (!profile || !profile.full_name || isNewProfile) {
         setActiveView('complete-profile');
       } else {
         if (activeView === 'login' || activeView === 'complete-profile') {
