@@ -1127,8 +1127,17 @@ export default function App() {
   useEffect(() => {
     // Listen for auth changes
     const { data: { subscription } } = authService.onAuthStateChange((event, session) => {
+      console.log('Auth event:', event);
       if (session?.user) {
         setCurrentUser(session.user);
+        
+        // If it's a new signup, force profile completion
+        if (event === 'SIGNED_UP') {
+          setActiveView('complete-profile');
+          setAuthLoading(false);
+          return;
+        }
+        
         loadProfile(session.user.id);
       } else {
         setCurrentUser(null);
