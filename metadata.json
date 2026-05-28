@@ -1,0 +1,6 @@
+{
+  "name": "Unlock'd",
+  "description": "Unlock'd helps people moving to a new city abroad find high-quality local professionals recommended by the community.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
