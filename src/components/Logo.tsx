@@ -11,7 +11,7 @@ export function Logo({ className, showTagline = false }: LogoProps) {
     <div className={cn("flex flex-col items-center flex-shrink-0", className)}>
       <img 
         src="/logo.png?v=3" 
-        alt="Unlock'd Logo" 
+        alt="Unlocked Logo" 
         className="h-10 md:h-14 w-auto object-contain flex-shrink-0"
         referrerPolicy="no-referrer"
       />

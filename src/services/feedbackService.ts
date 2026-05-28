@@ -86,13 +86,36 @@ export const feedbackService = {
         code: error.code,
         message: error.message,
         details: error.details,
-        hint: error.hint
+        hint: error.hint,
+        sentData: insertData
       });
       
-      // Fallback for RLS/Permission errors to avoid breaking UI
       if (error.code === '42501') {
-        console.warn('RLS Policy blocked insertion. Falling back to success state for UI continuity.');
-        return { status: 'fallback_success', ...insertData };
+        const sqlToRun = `
+-- COPY AND RUN THIS IN YOUR SUPABASE SQL EDITOR TO FIX FEEDBACK PERMISSIONS:
+
+-- 1. Enable RLS on feedbacks table
+ALTER TABLE feedbacks ENABLE ROW LEVEL SECURITY;
+
+-- 2. Drop any previous conflicting policies
+DROP POLICY IF EXISTS "Allow anyone to insert feedback" ON feedbacks;
+DROP POLICY IF EXISTS "Allow authenticated users to insert feedback" ON feedbacks;
+
+-- 3. Create the permissive insertion policy
+CREATE POLICY "Allow members to submit feedback" 
+ON feedbacks 
+FOR INSERT 
+TO public 
+WITH CHECK (true);
+
+-- 4. Verify
+-- This allows both logged-in users and anonymous visitors to submit feedback.
+        `.trim();
+        
+        const rlsError = new Error('Permission denied (Row Level Security).');
+        (rlsError as any).code = 'RLS_ERROR';
+        (rlsError as any).sql = sqlToRun;
+        throw rlsError;
       }
       
       throw error;

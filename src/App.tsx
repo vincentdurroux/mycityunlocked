@@ -1160,25 +1160,27 @@ export default function App() {
       const profile = await authService.getProfile(userId);
       setUserProfile(profile);
       
-      console.log('Loading profile for onboarding check:', { 
-        hasProfile: !!profile, 
-        hasName: profile?.full_name,
+      console.log(`[Onboarding Check] Profile for User ${userId}:`, { 
+        exists: !!profile, 
+        name: profile?.full_name,
+        created: profile?.created_at,
+        updated: profile?.updated_at,
         event 
       });
 
-      // If profile is missing, force onboarding
       if (!profile) {
+        console.log('[Onboarding] Profile missing, forcing flow.');
         setActiveView('complete-profile');
         return;
       }
 
-      // Detection logic for onboarding:
-      // 1. Missing full_name 
-      // 2. Explicitly SIGNED_UP event
-      // 3. New account (created in last 5 minutes) and just signed in
-      const isVeryNew = profile.created_at && (new Date().getTime() - new Date(profile.created_at).getTime()) < 300000;
+      const createdDate = profile.created_at ? new Date(profile.created_at).getTime() : 0;
+      const updatedDate = profile.updated_at ? new Date(profile.updated_at).getTime() : 0;
+      const isVeryNew = (new Date().getTime() - createdDate) < 1800000; // 30 minutes
+      const isUntouched = Math.abs(updatedDate - createdDate) < 5000; // 5 seconds margin
       
-      if (!profile.full_name || event === 'SIGNED_UP' || (event === 'SIGNED_IN' && isVeryNew && !profile.avatar_url)) {
+      if (!profile.full_name || event === 'SIGNED_UP' || (isVeryNew && isUntouched)) {
+        console.log('[Onboarding] Fresh untouched profile detected, showing setup.');
         setActiveView('complete-profile');
       } else {
         if (activeView === 'login' || activeView === 'complete-profile') {
@@ -1268,68 +1270,7 @@ export default function App() {
               <Logo className="items-center md:items-start" />
             </div>
             
-            <div className="relative">
-              <button 
-                onClick={() => setShowCitySelector(!showCitySelector)}
-                className="flex items-center justify-center md:justify-start gap-2 group transition-all hover:opacity-80 py-1"
-              >
-                <div className={cn(
-                  "flex items-center justify-center w-4 h-4 md:w-5 md:h-5 rounded-full transition-colors",
-                  showCitySelector ? "bg-rose-500 shadow-sm" : "bg-rose-50 group-hover:bg-rose-100"
-                )}>
-                  <MapPin className={cn(
-                    "w-2.5 h-2.5 md:w-3 md:h-3 transition-colors",
-                    showCitySelector ? "text-white" : "text-rose-500"
-                  )} />
-                </div>
-                <div className="flex flex-col items-start translate-y-[1px] md:translate-y-0">
-                  <span className="text-xs md:text-sm font-bold text-slate-700 uppercase tracking-wider">{city}</span>
-                </div>
-                <ChevronDown className={cn("w-3 h-3 md:w-3.5 md:h-3.5 text-slate-400 transition-transform duration-300", showCitySelector && "rotate-180")} />
-              </button>
 
-              <AnimatePresence>
-                {showCitySelector && (
-                  <>
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setShowCitySelector(false)} 
-                      id="city-backdrop"
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                      className="absolute top-full left-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden"
-                      id="city-dropdown"
-                    >
-                      <div className="p-2 space-y-1">
-                        <div className="px-3 py-2 border-b border-slate-50 mb-1">
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Your City</p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setCity('Valencia');
-                            setShowCitySelector(false);
-                          }}
-                          className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-slate-50 rounded-xl transition-colors group"
-                        >
-                          <div className="flex items-center gap-3">
-                            <img src="/valencia.jpg" alt="Valencia" className="w-8 h-8 rounded-lg object-cover grayscale group-hover:grayscale-0 transition-all hover:scale-105" />
-                            <span className="font-semibold text-slate-700">Valencia</span>
-                          </div>
-                          <div className="w-2 h-2 bg-green-500 rounded-full ring-4 ring-green-50" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
-            </div>
           </div>
           
           <div className="flex items-center gap-2 md:gap-4">
@@ -1586,7 +1527,7 @@ export default function App() {
                 <div className="p-8 pt-4 space-y-6">
                   <div className="p-4 bg-brand-yellow/10 border border-brand-yellow/20 rounded-2xl">
                     <p className="text-[11px] text-slate-700 leading-relaxed font-medium">
-                      Unlock*d is built on <span className="font-bold underline decoration-brand-yellow">trusted member recommendations</span>. 
+                      Unlocked is built on <span className="font-bold underline decoration-brand-yellow">trusted member recommendations</span>. 
                       Please only recommend professionals you have <span className="font-bold">personally used</span> and genuinely endorse. 
                       Self-promotion or recommending your own business is not permitted, as this undermines the integrity of our community.
                     </p>
@@ -5693,9 +5634,9 @@ function AdminView({
 }
 
 function ProfileSetupView({ currentUser, onComplete }: { currentUser: any, onComplete: (profile: Profile) => void }) {
-  const [fullName, setFullName] = useState('');
+  const [fullName, setFullName] = useState(currentUser?.user_metadata?.full_name || '');
   const [avatar, setAvatar] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(currentUser?.user_metadata?.avatar_url || null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -5736,7 +5677,7 @@ function ProfileSetupView({ currentUser, onComplete }: { currentUser: any, onCom
         id: currentUser.id,
         email: currentUser.email,
         full_name: fullName.trim(),
-        avatar_url: avatarUrl || undefined,
+        avatar_url: avatarUrl || avatarPreview || undefined,
       });
 
       onComplete(profile);
@@ -5954,7 +5895,7 @@ function LoginView({ onBack, onLoginSuccess, onSetUser, currentUser }: { onBack:
           >
             <div className="text-center space-y-2 mb-10">
               <h2 className="text-3xl font-bold text-brand-navy tracking-tight">
-                {isNewUser ? "Join Unlock'd" : "Sign In"}
+                {isNewUser ? "Join Unlocked" : "Sign In"}
               </h2>
             </div>
 
@@ -6216,7 +6157,7 @@ function HomeView({
             )}
           </h2>
           <p className="text-slate-500 text-base md:text-lg">
-            {currentUser ? 'Welcome back to your local community.' : 'Welcome to Unlock*d community'}
+            <span className="text-brand-blue font-medium italic">Discover better.</span> <span className="font-bold text-slate-900 leading-none">Belong faster.</span>
           </p>
         </div>
       </div>
@@ -6243,10 +6184,10 @@ function HomeView({
         <div className="relative z-10 grid lg:grid-cols-[1.1fr_0.9fr] gap-12 lg:gap-20 items-center">
           <div className="space-y-6 md:space-y-8 flex flex-col items-center lg:items-start text-center lg:text-left">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-semibold font-display leading-[1.1] tracking-tight max-w-lg mx-auto lg:mx-0">
-              Find recommended <span className="text-brand-blue italic">Pros</span> near you.
+              Find recommended <span className="text-brand-blue italic">Pros</span> nearby.
             </h1>
             <p className="text-slate-500 text-base md:text-xl max-w-sm leading-relaxed mx-auto lg:mx-0">
-              Connect with pros recommended by Unlock*d community.
+              Powered by local experiences.
             </p>
             
             <div className="w-full max-w-2xl space-y-3">
@@ -6285,7 +6226,7 @@ function HomeView({
         <div>
           <h3 className="font-semibold text-2xl font-display text-brand-navy flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-brand-blue" />
-            Discover on Unlock*d
+            Discover on Unlocked
           </h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -6329,7 +6270,7 @@ function HomeView({
                 authorToShow = latest.author || "Anonymous";
               } else {
                 ratingToShow = proToShow.rating || 5;
-                commentToShow = "Highly recommended professional with excellent track record on Unlock*d!";
+                commentToShow = "Highly recommended professional with excellent track record on Unlocked!";
                 authorToShow = "Community Member";
               }
             }
@@ -6659,7 +6600,7 @@ function HomeView({
                 <div className="flex items-start gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-brand-yellow/20 text-amber-700 flex items-center justify-center font-black text-[10px] mt-0.5 select-none shrink-0 border border-brand-yellow/30">2</div>
                   <p className="leading-tight" style={{ textAlign: 'left' }}>
-                    <strong className="text-slate-700">Validation</strong>: Our team validates directly with the pro to approve their profile on Unlock*d.
+                    <strong className="text-slate-700">Validation</strong>: Our team validates directly with the pro to approve their profile on Unlocked.
                   </p>
                 </div>
                 
@@ -7279,7 +7220,7 @@ function ExploreView({ allPros, onNavigate, initialProId, initialSearch, onModal
           location: p.location || ""
         }));
 
-        const sysInstruction = `You are an expert matching AI assistant for "Unlock'd" - a premier community-curated directory of recommended local professionals.
+        const sysInstruction = `You are an expert matching AI assistant for "Unlocked" - a premier community-curated directory of recommended local professionals.
 Your purpose is to thoroughly examine the user's natural language request (written in French, English, or Spanish) and return the most relevant matching professionals.
 
 Review the list of professionals provided and rank them based on:
@@ -7914,7 +7855,7 @@ ${JSON.stringify(proListBrief, null, 2)}`,
                             }}
                             className="text-[9px] font-medium text-brand-blue uppercase tracking-widest hover:underline flex items-center gap-1 mt-1 transition-all active:scale-95"
                           >
-                            <Lock className="w-2.5 h-2.5 text-brand-blue" /> Sign up to Unlock*d
+                            <Lock className="w-2.5 h-2.5 text-brand-blue" /> Sign up to Unlocked
                           </button>
                         )}
                       </div>
@@ -9253,7 +9194,7 @@ function ProfessionalDetailView({
                       onClick={() => { onClose(); onNavigate('login'); }}
                       className="px-5 py-2.5 bg-brand-blue hover:bg-blue-600 text-white rounded-xl text-[10px] font-semibold uppercase tracking-wider shadow-lg shadow-brand-blue/25 transition-all active:scale-95 flex items-center gap-1.5"
                     >
-                      <Lock className="w-3.5 h-3.5" /> Sign up for free to Unlock*d
+                      <Lock className="w-3.5 h-3.5" /> Sign up for free to Unlocked
                     </button>
                   </div>
                 )}
@@ -9355,7 +9296,7 @@ function ProfessionalDetailView({
                         onClick={() => { onClose(); onNavigate('login'); }}
                         className="px-5 py-2.5 bg-brand-blue hover:bg-blue-600 text-white rounded-xl text-[10px] font-semibold uppercase tracking-wider shadow-lg shadow-brand-blue/25 transition-all active:scale-95 flex items-center gap-1.5 justify-center mx-auto"
                       >
-                        <Lock className="w-3.5 h-3.5" /> Sign up for free to Unlock*d
+                        <Lock className="w-3.5 h-3.5" /> Sign up for free to Unlocked
                       </button>
                     </div>
                   )}
@@ -10063,6 +10004,7 @@ function FeedbackSubPage({ currentUser, onBack }: { currentUser: any, onBack: ()
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [suggestedSql, setSuggestedSql] = useState<string | null>(null);
 
   const categories = [
     { id: 'bug', label: 'Bug Report', icon: AlertCircle, color: 'text-rose-500 bg-rose-50 border-rose-100' },
@@ -10080,6 +10022,7 @@ function FeedbackSubPage({ currentUser, onBack }: { currentUser: any, onBack: ()
 
     setSubmitting(true);
     setError(null);
+    setSuggestedSql(null);
 
     try {
       await feedbackService.submitFeedback({
@@ -10091,7 +10034,12 @@ function FeedbackSubPage({ currentUser, onBack }: { currentUser: any, onBack: ()
       setSubmitted(true);
     } catch (err: any) {
       console.error('Error submitting feedback:', err);
-      setError('Could not submit feedback. Please try again.');
+      if (err.code === 'RLS_ERROR') {
+        setError('Permission denied by Supabase database (RLS Policy).');
+        setSuggestedSql(err.sql);
+      } else {
+        setError(err.message || 'Could not submit feedback. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -10106,7 +10054,7 @@ function FeedbackSubPage({ currentUser, onBack }: { currentUser: any, onBack: ()
         <div className="space-y-2">
           <h3 className="text-xl font-bold text-slate-900 font-display">Thank you for your feedback!</h3>
           <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">
-            Your insights have been saved successfully and help us improve the Unlock'd experience for everyone.
+            Your insights have been saved successfully and help us improve the Unlocked experience for everyone.
           </p>
         </div>
         <button
@@ -10129,9 +10077,29 @@ function FeedbackSubPage({ currentUser, onBack }: { currentUser: any, onBack: ()
         </div>
 
         {error && (
-          <div className="p-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 animate-bounce" />
-            <p className="text-xs font-bold tracking-tight">{error}</p>
+          <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3">
+            <AlertCircle className={`w-5 h-5 shrink-0 text-rose-500 ${!suggestedSql ? 'animate-bounce' : ''}`} />
+            <div className="space-y-3 w-full">
+              <p className="text-xs font-bold tracking-tight text-rose-700">{error}</p>
+              {suggestedSql && (
+                <div className="space-y-2 bg-white/50 p-3 rounded-xl border border-rose-100 mt-2">
+                  <p className="text-[10px] text-rose-600 font-bold uppercase tracking-wider">Solution: Run this in Supabase SQL Editor</p>
+                  <pre className="p-3 bg-slate-900 text-slate-100 text-[10px] font-mono rounded-lg overflow-x-auto whitespace-pre select-all">
+                    {suggestedSql}
+                  </pre>
+                  <p className="text-[9px] text-slate-500 italic">This will grant permission to the public role to submit feedback forms.</p>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(suggestedSql);
+                      alert('SQL command copied to clipboard!');
+                    }}
+                    className="w-full py-2 bg-brand-blue text-white text-[10px] font-bold uppercase tracking-wider rounded-lg hover:bg-brand-blue-dark transition-colors shadow-sm"
+                  >
+                    Copy Fix-it SQL
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -10336,7 +10304,7 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
         <div className="text-center space-y-3 mb-10 max-w-xs">
           <h2 className="text-2xl font-bold font-display text-brand-navy">Your Profile</h2>
           <p className="text-slate-400 text-sm leading-relaxed">
-            Join the Unlock'd community to save your favorite pros, participate in events, and chat with members.
+            Join the Unlocked community to save your favorite pros, participate in events, and chat with members.
           </p>
         </div>
         <button 
@@ -10974,7 +10942,7 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
         )}
 
         {activeSubPage === 'About' && (
-          <ProfileSubPage key="subpage-about" title="About Unlock'd" onBack={() => setActiveSubPage(null)} className="bg-white">
+          <ProfileSubPage key="subpage-about" title="About Unlocked" onBack={() => setActiveSubPage(null)} className="bg-white">
             <div className="flex flex-col items-center text-center space-y-8 py-8">
               <Logo className="scale-125 mb-4" />
               <div>

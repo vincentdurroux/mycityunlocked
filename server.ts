@@ -58,7 +58,7 @@ async function startServer() {
         location: p.location || ""
       }));
 
-      const sysInstruction = `You are an expert matching AI assistant for "Unlock'd" - a premier community-curated directory of recommended local professionals.
+      const sysInstruction = `You are an expert matching AI assistant for "Unlocked" - a premier community-curated directory of recommended local professionals.
 Your purpose is to thoroughly examine the user's natural language request (written in French, English, or Spanish) and return the most relevant matching professionals.
 
 Review the list of professionals provided and rank them based on:

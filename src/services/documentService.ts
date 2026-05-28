@@ -37,22 +37,22 @@ export interface AppDocument {
 // -- Insert starting data
 // insert into public.app_documents (key, title, content)
 // values 
-// ('privacy_policy', 'Privacy Policy', '# Privacy Policy\n\nYour privacy is dynamic and protected. At Unlock''d, we value your trust.\n\n### 1. Information Collection\nWe only collect essential details to register your profile and connect you with qualified services.\n\n### 2. General Data Protection\nYour confidential contact information (email, phone number) is blurred by default for unauthenticated visitors and only revealed after an approved connection.'),
-// ('terms_of_service', 'Provider Terms & Conditions', '# Provider Terms & Conditions\n\nWelcome to Unlock''d. These Terms and Conditions govern your use of the website.\n\n### 1. Professional Recommendations\nAny recommendation published on Unlock''d must be verified by real users. False testimonials are strictly forbidden.\n\n### 2. Code of Conduct\nUsers are expected to communicate respectfully in both general channels and direct messages.'),
+// ('privacy_policy', 'Privacy Policy', '# Privacy Policy\n\nYour privacy is dynamic and protected. At Unlocked, we value your trust.\n\n### 1. Information Collection\nWe only collect essential details to register your profile and connect you with qualified services.\n\n### 2. General Data Protection\nYour confidential contact information (email, phone number) is blurred by default for unauthenticated visitors and only revealed after an approved connection.'),
+// ('terms_of_service', 'Provider Terms & Conditions', '# Provider Terms & Conditions\n\nWelcome to Unlocked. These Terms and Conditions govern your use of the website.\n\n### 1. Professional Recommendations\nAny recommendation published on Unlocked must be verified by real users. False testimonials are strictly forbidden.\n\n### 2. Code of Conduct\nUsers are expected to communicate respectfully in both general channels and direct messages.'),
 // ('community_guidelines', 'Community Guidelines', '# Community Guidelines\n\n### 1. Transparency & Trust\nOnly recommend professionals you have personally hired or verified.\n\n### 2. Professionalism\nConstructive reviews, honest feedback, and mutual respect.'),
-// ('cookie_policy', 'Cookie Policy', '# Cookie Policy\n\nAt Unlock''d, we believe in being clear and open about how we collect and use data related to you.\n\n### 1. What Are Cookies?\nCookies are small text files sent by us to your computer or mobile device. They are unique to your account or your browser.\n\n### 2. How We Use Them\nWe use cookies to keep you signed in, remember your city preferences (such as Valencia), and ensure a smooth application experience.'),
-// ('user_terms', 'User Terms & Conditions', '# User Terms & Conditions\n\nThese User Terms and Conditions govern your access to and use of Unlock''d platform services.\n\n### 1. Account Security\nYou must secure your credentials. You are responsible for any activity performed under your account.\n\n### 2. Acceptable Use\nYou agree not to misuse the direct messaging system, scrape content, or post inaccurate local profiles.');
+// ('cookie_policy', 'Cookie Policy', '# Cookie Policy\n\nAt Unlocked, we believe in being clear and open about how we collect and use data related to you.\n\n### 1. What Are Cookies?\nCookies are small text files sent by us to your computer or mobile device. They are unique to your account or your browser.\n\n### 2. How We Use Them\nWe use cookies to keep you signed in, remember your city preferences (such as Valencia), and ensure a smooth application experience.'),
+// ('user_terms', 'User Terms & Conditions', '# User Terms & Conditions\n\nThese User Terms and Conditions govern your access to and use of Unlocked platform services.\n\n### 1. Account Security\nYou must secure your credentials. You are responsible for any activity performed under your account.\n\n### 2. Acceptable Use\nYou agree not to misuse the direct messaging system, scrape content, or post inaccurate local profiles.');
 
 const DEFAULT_DOCUMENTS: Record<string, AppDocument> = {
   privacy_policy: {
     key: 'privacy_policy',
     title: 'Privacy Policy',
-    content: `# Privacy Policy\n\nYour privacy is dynamic and protected. At Unlock'd, we value your trust.\n\n### 1. Information Collection\nWe only collect essential details to register your profile and connect you with qualified services.\n\n### 2. General Data Protection\nYour confidential contact information (email, phone number) is blurred by default for unauthenticated visitors and only revealed after an approved connection.`
+    content: `# Privacy Policy\n\nYour privacy is dynamic and protected. At Unlocked, we value your trust.\n\n### 1. Information Collection\nWe only collect essential details to register your profile and connect you with qualified services.\n\n### 2. General Data Protection\nYour confidential contact information (email, phone number) is blurred by default for unauthenticated visitors and only revealed after an approved connection.`
   },
   terms_of_service: {
     key: 'terms_of_service',
     title: 'Provider Terms & Conditions',
-    content: `# Provider Terms & Conditions\n\nWelcome to Unlock'd. These Terms and Conditions govern your use of the website.\n\n### 1. Professional Recommendations\nAny recommendation published on Unlock'd must be verified by real users. False testimonials are strictly forbidden.\n\n### 2. Code of Conduct\nUsers are expressed to communicate respectfully in both general channels and direct messages.`
+    content: `# Provider Terms & Conditions\n\nWelcome to Unlocked. These Terms and Conditions govern your use of the website.\n\n### 1. Professional Recommendations\nAny recommendation published on Unlocked must be verified by real users. False testimonials are strictly forbidden.\n\n### 2. Code of Conduct\nUsers are expressed to communicate respectfully in both general channels and direct messages.`
   },
   community_guidelines: {
     key: 'community_guidelines',
@@ -62,12 +62,12 @@ const DEFAULT_DOCUMENTS: Record<string, AppDocument> = {
   cookie_policy: {
     key: 'cookie_policy',
     title: 'Cookie Policy',
-    content: `# Cookie Policy\n\nAt Unlock'd, we believe in being clear and open about how we collect and use data related to you.\n\n### 1. What Are Cookies?\nCookies are small text files sent by us to your computer or mobile device. They are unique to your account or your browser.\n\n### 2. How We Use Them\nWe use cookies to keep you signed in, remember your city preferences (such as Valencia), and ensure a smooth navigation flow.`
+    content: `# Cookie Policy\n\nAt Unlocked, we believe in being clear and open about how we collect and use data related to you.\n\n### 1. What Are Cookies?\nCookies are small text files sent by us to your computer or mobile device. They are unique to your account or your browser.\n\n### 2. How We Use Them\nWe use cookies to keep you signed in, remember your city preferences (such as Valencia), and ensure a smooth navigation flow.`
   },
   user_terms: {
     key: 'user_terms',
     title: 'User Terms & Conditions',
-    content: `# User Terms & Conditions\n\nThese User Terms and Conditions govern your access to and use of Unlock'd platform services as an active member.\n\n### 1. Account Security\nYou must secure your credentials. You are responsible for any activity performed under your account.\n\n### 2. Acceptable Use\nYou agree not to misuse the direct messaging system, scrape content, or post inaccurate local profiles.`
+    content: `# User Terms & Conditions\n\nThese User Terms and Conditions govern your access to and use of Unlocked platform services as an active member.\n\n### 1. Account Security\nYou must secure your credentials. You are responsible for any activity performed under your account.\n\n### 2. Acceptable Use\nYou agree not to misuse the direct messaging system, scrape content, or post inaccurate local profiles.`
   }
 };
 
