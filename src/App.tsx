@@ -1130,8 +1130,7 @@ export default function App() {
       console.log('Auth event:', event);
       if (session?.user) {
         setCurrentUser(session.user);
-        
-        loadProfile(session.user.id);
+        loadProfile(session.user.id, event);
       } else {
         setCurrentUser(null);
         setUserProfile(null);
@@ -1156,15 +1155,30 @@ export default function App() {
     };
   }, []);
 
-  const loadProfile = async (userId: string) => {
+  const loadProfile = async (userId: string, event?: string) => {
     try {
       const profile = await authService.getProfile(userId);
       setUserProfile(profile);
-      // If profile is new (created_at == updated_at) or name is missing, force onboarding
-      const isNewProfile = profile && profile.created_at && profile.updated_at && 
-                           Math.abs(new Date(profile.created_at).getTime() - new Date(profile.updated_at).getTime()) < 1000;
       
-      if (!profile || !profile.full_name || isNewProfile) {
+      console.log('Loading profile for onboarding check:', { 
+        hasProfile: !!profile, 
+        hasName: profile?.full_name,
+        event 
+      });
+
+      // If profile is missing, force onboarding
+      if (!profile) {
+        setActiveView('complete-profile');
+        return;
+      }
+
+      // Detection logic for onboarding:
+      // 1. Missing full_name 
+      // 2. Explicitly SIGNED_UP event
+      // 3. New account (created in last 5 minutes) and just signed in
+      const isVeryNew = profile.created_at && (new Date().getTime() - new Date(profile.created_at).getTime()) < 300000;
+      
+      if (!profile.full_name || event === 'SIGNED_UP' || (event === 'SIGNED_IN' && isVeryNew && !profile.avatar_url)) {
         setActiveView('complete-profile');
       } else {
         if (activeView === 'login' || activeView === 'complete-profile') {
