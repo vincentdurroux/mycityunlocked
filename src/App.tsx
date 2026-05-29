@@ -7491,12 +7491,7 @@ ${JSON.stringify(proListBrief, null, 2)}`,
     }
   }, [initialSearch]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDeferredSearch(search);
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [search]);
+
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   useEffect(() => {
