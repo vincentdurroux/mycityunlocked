@@ -97,9 +97,72 @@ import { proService } from './services/proService';
 import { eventService } from './services/eventService';
 import { authService, Profile } from './services/authService';
 import { chatService, Conversation, Message } from './services/chatService';
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkBreaks from 'remark-breaks';
+function SimpleMarkdown({ children }: { children?: string }) {
+  if (!children) return null;
+  
+  // Normalize newline sequences
+  const cleanText = children.replace(/\r\n/g, '\n');
+  const lines = cleanText.split('\n');
+  
+  return (
+    <div className="space-y-2 whitespace-pre-wrap text-[13px] text-slate-600 leading-relaxed">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          return <div key={idx} className="h-2" />;
+        }
+        
+        // Headers
+        if (trimmed.startsWith('#')) {
+          const match = trimmed.match(/^(#{1,6})\s+(.*)$/);
+          if (match) {
+            const level = match[1].length;
+            const text = match[2];
+            const sizeClass = level === 1 ? 'text-xl font-bold' : level === 2 ? 'text-lg font-bold' : 'text-sm font-bold';
+            return (
+              <div key={idx} className={`${sizeClass} text-slate-800 pt-2 pb-1`}>
+                {parseInlineMarkdown(text)}
+              </div>
+            );
+          }
+        }
+        
+        // List items
+        if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+          return (
+            <div key={idx} className="flex gap-2 pl-3 items-start">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0" />
+              <div className="flex-1">{parseInlineMarkdown(trimmed.substring(2))}</div>
+            </div>
+          );
+        }
+        
+        return <p key={idx}>{parseInlineMarkdown(line)}</p>;
+      })}
+    </div>
+  );
+}
+
+function parseInlineMarkdown(text: string): React.ReactNode {
+  const boldRegex = /\*\*(.*?)\*\*/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  
+  while ((match = boldRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+    parts.push(<strong key={match.index} className="font-semibold text-slate-900">{match[1]}</strong>);
+    lastIndex = boldRegex.lastIndex;
+  }
+  
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+  
+  return parts.length > 0 ? <>{parts}</> : text;
+}
 import { documentService } from './services/documentService';
 import { guideService, MOCK_GUIDE_CATEGORIES_DATA } from './services/guide_service';
 import { feedbackService } from './services/feedbackService';
@@ -2249,7 +2312,7 @@ function AdDetailModal({ ad, onClose }: { ad: Ad | any, onClose: () => void }) {
             <div className="space-y-3">
               <h4 className="font-bold text-slate-900">Description</h4>
               <div className="markdown-body">
-                <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>{ad.description || "No description provided for this item."}</Markdown>
+                <SimpleMarkdown>{ad.description || "No description provided for this item."}</SimpleMarkdown>
               </div>
             </div>
 
@@ -6789,7 +6852,7 @@ function ExpertGuideModal({ isOpen, onClose, article }: { isOpen: boolean, onClo
 
               {/* Guide Content - Simple and highly readable text */}
               <div className="markdown-body">
-                <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>{article.content}</Markdown>
+                <SimpleMarkdown>{article.content}</SimpleMarkdown>
               </div>
 
               {/* Call to Action Section - Optionnel (rendered only if author has contact info or website) */}
@@ -9363,7 +9426,7 @@ function ProfessionalDetailView({
                   <h4 className="text-lg font-semibold text-slate-900 font-display uppercase tracking-wider">About</h4>
                 </div>
                 <div className="markdown-body">
-                  <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>{pro.bio}</Markdown>
+                  <SimpleMarkdown>{pro.bio}</SimpleMarkdown>
                 </div>
               </section>
 
@@ -9788,9 +9851,9 @@ function EventDetailModal({ event, onClose }: { event: Event, onClose: () => voi
           </div>
 
           <div className="markdown-body">
-            <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+            <SimpleMarkdown>
               {event.description || `Join us for ${event.title} at ${event.location}! This is a great opportunity to meet new people and enjoy the local atmosphere.`}
-            </Markdown>
+            </SimpleMarkdown>
           </div>
 
           {event.coordinates && (
@@ -11245,7 +11308,7 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
                 ) : (
                   <div className="text-slate-700 leading-relaxed font-sans space-y-6 text-sm sm:text-base">
                     <div className="markdown-body">
-                      <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>{docContent}</Markdown>
+                      <SimpleMarkdown>{docContent}</SimpleMarkdown>
                     </div>
                     <div className="pt-6 border-t border-slate-100 flex justify-start">
                       <button 
