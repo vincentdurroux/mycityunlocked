@@ -11520,13 +11520,19 @@ function ProfileSubPage({ title, onBack, children, className }: { title: string,
       transition={{ duration: 0.3, ease: "easeOut" }}
       className={cn("fixed inset-0 z-[60] flex flex-col", className || "bg-slate-50")}
     >
-      <div className="bg-white border-b border-slate-100 px-6 py-4 flex items-center gap-4">
-        <button onClick={onBack} className="p-2 -ml-2 hover:bg-slate-50 rounded-full transition-colors">
-          <ArrowLeft className="w-6 h-6 text-slate-900" />
-        </button>
+      <div className="bg-white border-b border-slate-100 px-6 py-4 flex items-center">
         <h2 className="text-xl font-semibold font-display text-brand-navy">{title}</h2>
       </div>
       <div className="flex-1 overflow-y-auto p-6 pb-24">
+        <div className="max-w-2xl mx-auto mb-5">
+          <button 
+            onClick={onBack} 
+            className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 font-semibold text-xs uppercase tracking-wider transition-colors group cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+            <span>Back</span>
+          </button>
+        </div>
         {children}
       </div>
     </motion.div>
