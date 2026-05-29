@@ -6339,7 +6339,7 @@ function HomeView({
             )}
           </h2>
           <p className="text-slate-500 text-base md:text-lg">
-            <span className="text-brand-blue font-medium italic">Discover better.</span> <span className="font-bold text-slate-900 leading-none">Belong faster.</span>
+            <span className="text-brand-blue font-medium italic">Discover better.</span> <span className="font-semibold text-slate-900 leading-none">Belong faster.</span>
           </p>
         </div>
       </div>
@@ -10499,6 +10499,12 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [activeSettingsView, setActiveSettingsView] = useState<'main' | 'security'>('main');
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showSqlInstruction, setShowSqlInstruction] = useState(false);
@@ -10549,6 +10555,48 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
   useEffect(() => {
     scrollToTop?.();
   }, [activeSubPage]);
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(null);
+
+    if (!currentPassword) {
+      setPasswordError("Please enter your current password to continue.");
+      return;
+    }
+    if (!newPassword) {
+      setPasswordError("Please enter a new password.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters long.");
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setPasswordError("The new password must be different from your current password.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match.");
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      await authService.updatePassword(newPassword, currentPassword);
+      setPasswordSuccess("Password updated successfully!");
+      setTimeout(() => setPasswordSuccess(null), 5000);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      console.error("Error updating password:", err);
+      setPasswordError(err?.message || "Failed to update password. Make sure you are signed in.");
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
 
   const handleAvatarClick = () => {
     avatarInputRef.current?.click();
@@ -11208,58 +11256,84 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
                   key="nested-security" 
                   title="Account Security" 
                   className="bg-slate-50 z-[70]"
-                  onBack={() => setActiveSettingsView('main')}
+                  onBack={() => {
+                    setActiveSettingsView('main');
+                    setPasswordError(null);
+                    setPasswordSuccess(null);
+                    setCurrentPassword("");
+                  }}
                 >
                   <div className="space-y-6">
                     <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <p className="font-bold text-slate-900">Two-Factor Authentication</p>
-                          <p className="text-xs text-slate-500">Add an extra layer of security to your account.</p>
-                        </div>
-                        <div className="w-12 h-6 bg-slate-200 rounded-full relative cursor-pointer">
-                          <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4">
                       <p className="font-bold text-slate-900">Change Password</p>
-                      <div className="space-y-4">
+                      
+                      <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                        {passwordError && (
+                          <div className="p-3 bg-red-50 text-red-700 text-xs font-semibold rounded-xl border border-red-100">
+                            {passwordError}
+                          </div>
+                        )}
+                        {passwordSuccess && (
+                          <div className="p-3 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-xl border border-emerald-100">
+                            {passwordSuccess}
+                          </div>
+                        )}
+
                         <div className="space-y-2">
                           <label className="text-sm font-bold text-slate-700">Current Password</label>
-                          <input type="password" placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-blue outline-none" />
+                          <input 
+                            type="password" 
+                            placeholder="••••••••" 
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-blue outline-none text-slate-800 font-medium" 
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            disabled={isUpdatingPassword}
+                            minLength={6}
+                            required
+                          />
                         </div>
+
                         <div className="space-y-2">
                           <label className="text-sm font-bold text-slate-700">New Password</label>
-                          <input type="password" placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-blue outline-none" />
+                          <input 
+                            type="password" 
+                            placeholder="••••••••" 
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-blue outline-none text-slate-800 font-medium" 
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            disabled={isUpdatingPassword}
+                            minLength={6}
+                            required
+                          />
                         </div>
                         <div className="space-y-2">
                           <label className="text-sm font-bold text-slate-700">Confirm New Password</label>
-                          <input type="password" placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-blue outline-none" />
+                          <input 
+                            type="password" 
+                            placeholder="••••••••" 
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-blue outline-none text-slate-800 font-medium" 
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            disabled={isUpdatingPassword}
+                            minLength={6}
+                          />
                         </div>
-                        <button className="w-full py-4 bg-brand-blue text-white rounded-2xl font-bold shadow-lg shadow-brand-blue/20 mt-4">
-                          Update Password
+                        
+                        <button 
+                          type="submit"
+                          disabled={isUpdatingPassword}
+                          className="w-full py-4 bg-brand-blue text-white rounded-2xl font-bold shadow-lg shadow-brand-blue/20 mt-4 hover:bg-brand-blue/90 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                        >
+                          {isUpdatingPassword ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Updating...</span>
+                            </>
+                          ) : (
+                            "Update Password"
+                          )}
                         </button>
-                      </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4">
-                      <p className="font-bold text-slate-900">Login History</p>
-                      <div className="space-y-4">
-                        {[
-                          { device: 'iPhone 15 Pro', location: 'Valencia, ES', time: 'Active now' },
-                          { device: 'MacBook Air', location: 'Valencia, ES', time: '2 hours ago' }
-                        ].map((login, i) => (
-                          <div key={i} className="flex justify-between items-center text-sm">
-                            <div>
-                              <p className="font-medium text-slate-700">{login.device}</p>
-                              <p className="text-xs text-slate-400">{login.location}</p>
-                            </div>
-                            <span className="text-xs text-slate-400">{login.time}</span>
-                          </div>
-                        ))}
-                      </div>
+                      </form>
                     </div>
                   </div>
                 </ProfileSubPage>

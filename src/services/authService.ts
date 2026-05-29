@@ -190,6 +190,33 @@ export const authService = {
 
   onAuthStateChange(callback: (event: string, session: any) => void) {
     return supabase.auth.onAuthStateChange(callback);
+  },
+
+  async updatePassword(password: string, oldPassword?: string) {
+    if (!isSupabaseConfigured) throw new Error('Supabase is not configured');
+    
+    if (oldPassword) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !user.email) {
+        throw new Error("User credentials not found. Please log in again.");
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: oldPassword
+      });
+
+      if (signInError) {
+        throw new Error("Your current password is incorrect. Please try again.");
+      }
+    }
+    
+    const { data, error } = await supabase.auth.updateUser({
+      password: password
+    });
+
+    if (error) throw error;
+    return data;
   }
 };
 
