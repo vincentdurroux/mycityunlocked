@@ -7715,7 +7715,7 @@ ${JSON.stringify(proListBrief, null, 2)}`,
                     <input 
                       ref={inputRef}
                       type="text" 
-                      placeholder="Search profession or skill"
+                      placeholder="Search profession or skills"
                       className="w-full bg-transparent outline-none text-slate-800 font-bold leading-tight placeholder:text-slate-300 text-sm md:text-base border-none p-0 focus:ring-0"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
@@ -7731,9 +7731,6 @@ ${JSON.stringify(proListBrief, null, 2)}`,
                       }}
                     />
                   </div>
-                  <p className="text-xs text-slate-400 font-medium ml-8">
-                    e.g. Dentist, Plumber, Accountant, Nanny...
-                  </p>
                 </div>
 
                 {/* Big Search Action Button */}
@@ -7913,32 +7910,6 @@ ${JSON.stringify(proListBrief, null, 2)}`,
                   Get Recommendations
                 </button>
 
-                {/* Suggestions Section */}
-                <div className="space-y-2.5 pt-1">
-                  <p className="text-xs font-bold text-slate-400 tracking-wide text-left">
-                    Try asking something like:
-                  </p>
-                  <div className="flex flex-col gap-2">
-                    {[
-                      "I need an English-speaking dentist near L'Eliana",
-                      "Help me with my tax declaration as an expat",
-                      "My pool is green and I don't know who to call"
-                    ].map((suggestion, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => {
-                          setSearch(suggestion);
-                          setTimeout(() => {
-                            inputRef.current?.focus();
-                          }, 50);
-                        }}
-                        className="text-left px-4 py-3 bg-violet-50/40 hover:bg-violet-50 hover:text-violet-900 border border-violet-100/30 rounded-2xl text-xs font-semibold text-slate-600 transition-all leading-normal active:scale-[0.99] cursor-pointer"
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                </div>
 
                 {/* Privacy Safeguard Note */}
                 <div className="flex items-center justify-center gap-1.5 text-slate-400 font-bold text-[10px] md:text-[11px] tracking-wide pt-1 text-center">
