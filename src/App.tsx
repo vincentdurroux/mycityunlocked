@@ -522,6 +522,20 @@ function OrientationLock() {
 export default function App() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    const lockOrientation = async () => {
+      try {
+        if ('orientation' in screen && 'lock' in (screen.orientation as any)) {
+          await (screen.orientation as any).lock('portrait');
+        }
+      } catch (err) {
+        console.warn('Orientation lock failed:', err);
+      }
+    };
+    lockOrientation();
+  }, []);
+
   const mainRef = useRef<HTMLElement>(null);
   const { professionals: allPros, loading: prosLoading, refetch: refetchPros } = useProfessionals([]);
   const [activeView, setActiveView] = useState<View>('home');
