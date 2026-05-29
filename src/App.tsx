@@ -505,6 +505,20 @@ const MOCK_GUIDE: GuideStep[] = [
 
 // --- Components ---
 
+function OrientationLock() {
+  return (
+    <div className="orientation-lock-overlay">
+      <div className="bg-slate-50 p-6 rounded-3xl mb-6 shadow-sm border border-slate-100 flex items-center justify-center">
+        <Smartphone className="w-12 h-12 text-brand-blue animate-bounce" />
+      </div>
+      <h3 className="text-xl font-bold text-slate-900 mb-2">Please rotate your device</h3>
+      <p className="text-slate-500 text-sm max-w-[240px] leading-relaxed">
+        Unlocked is optimized for portrait mode. Please rotate your phone to continue.
+      </p>
+    </div>
+  );
+}
+
 export default function App() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
@@ -1231,6 +1245,7 @@ export default function App() {
   return (
     <APIProvider apiKey={GOOGLE_MAPS_KEY} version="weekly">
       <div className="flex flex-col h-screen h-[100dvh] bg-white w-full mx-auto shadow-2xl overflow-hidden relative">
+        <OrientationLock />
       
         <AnimatePresence>
           {globalAlert && (
