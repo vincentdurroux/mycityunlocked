@@ -73,6 +73,17 @@ export const authService = {
     if (error) throw error;
   },
 
+  async deleteOwnAccount() {
+    if (!isSupabaseConfigured) throw new Error('Supabase is not configured');
+    
+    // Call the database function that handles archiving and final deletion of auth.users
+    const { error } = await supabase.rpc('delete_own_user');
+    if (error) {
+      console.error('Error in delete_own_user RPC:', error);
+      throw error;
+    }
+  },
+
   async getCurrentUser() {
     const { data: { user } } = await supabase.auth.getUser();
     return user;
@@ -224,4 +235,36 @@ export const authService = {
  * create trigger on_auth_user_created
  *   after insert on auth.users
  *   for each row execute procedure public.handle_new_user();
+ * 
+ * -- =========================================================
+ * -- UNLOCKD UN-REGISTRATION & PROFILE ARCHIVING SETUP
+ * -- =========================================================
+ * 
+ * -- 1. Create the archive table to store un-registered users
+ * create table if not exists public.archive_profiles (
+ *   id uuid primary key,
+ *   email text not null,
+ *   full_name text,
+ *   deleted_at timestamp with time zone default timezone('utc'::text, now()) not null
+ * );
+ * 
+ * -- Enable row level security, but restrict access to admins or none (completely offline history)
+ * alter table public.archive_profiles enable row level security;
+ * 
+ * -- 2. Create the security definer function to handle self-deletion
+ * create or replace function public.delete_own_user()
+ * returns void as $$
+ * begin
+ *   -- Archive user profile info first
+ *   insert into public.archive_profiles (id, email, full_name, deleted_at)
+ *   select id, email, full_name, now()
+ *   from public.profiles
+ *   where id = auth.uid()
+ *   on conflict (id) do nothing;
+ * 
+ *   -- Delete the user from auth.users (on delete cascade deletes from public.profiles automatically!)
+ *   delete from auth.users
+ *   where id = auth.uid();
+ * end;
+ * $$ language plpgsql security definer;
  */

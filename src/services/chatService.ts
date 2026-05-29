@@ -133,7 +133,9 @@ export const chatService = {
     
     try {
       console.log(`Fetching conversations for user: ${userId}`);
-      const { data: conversations, error } = await supabase
+      
+      // 1. Fetch conversations where user is a participant
+      const { data: allConversations, error } = await supabase
         .from('conversations')
         .select('*')
         .or(`participant_1.eq.${userId},participant_2.eq.${userId}`)
@@ -144,17 +146,58 @@ export const chatService = {
         throw error;
       }
       
-      console.log(`Found ${conversations?.length || 0} conversations`);
-      if (!conversations || conversations.length === 0) return [];
+      if (!allConversations || allConversations.length === 0) return [];
+
+      // 2. Identify and filter out conversations with NO messages
+      // We check all messages for these conversation IDs
+      const conversationIds = allConversations.map(c => c.id);
+      const { data: messagesCheck, error: msgError } = await supabase
+        .from('messages')
+        .select('conversation_id')
+        .in('conversation_id', conversationIds);
+
+      if (msgError) {
+        console.warn('Error checking messages for empty conversations:', msgError);
+        // If message check fails, we proceed with all conversations to be safe
+      }
+
+      const activeConvIds = new Set((messagesCheck || []).map(m => m.conversation_id));
       
-      // Collect unique IDs of all participants
+      // Separate active vs empty
+      const now = new Date();
+      const activeConversations = allConversations.filter(c => {
+        const isActive = activeConvIds.has(c.id);
+        const ageInMs = now.getTime() - new Date(c.created_at).getTime();
+        const isRecent = ageInMs < 300000; // 5 minutes
+        return isActive || isRecent;
+      });
+
+      const emptyConversationsToDelete = allConversations.filter(c => 
+        !activeConvIds.has(c.id) && 
+        (now.getTime() - new Date(c.created_at).getTime()) >= 300000
+      );
+
+      // 3. Trigger background cleanup for empty conversations (asynchronously)
+      if (emptyConversationsToDelete.length > 0) {
+        emptyConversationsToDelete.forEach(c => {
+          // We don't await this to keep the main fetch fast
+          this.deleteConversationIfEmpty(c.id).catch(err => {
+            console.warn(`[ChatService] Background cleanup of conversation ${c.id} failed:`, err);
+          });
+        });
+      }
+
+      console.log(`Found ${activeConversations.length} active conversations (Filtered ${emptyConversationsToDelete.length} empty ones)`);
+      if (activeConversations.length === 0) return [];
+      
+      // 4. Collect unique IDs of all participants for active conversations
       const participantIds = Array.from(new Set(
-        conversations.map(c => c.participant_1 === userId ? c.participant_2 : c.participant_1)
+        activeConversations.map(c => c.participant_1 === userId ? c.participant_2 : c.participant_1)
       ));
       
       if (participantIds.length === 0) return [];
 
-      // Fetch their profiles
+      // 5. Fetch their profiles
       console.log(`Fetching ${participantIds.length} profiles for participants...`);
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
@@ -167,8 +210,8 @@ export const chatService = {
       
       const profileMap = new Map((profiles || []).map(p => [p.id, p]));
       
-      // Match conversations with profiles
-      return conversations.map(c => {
+      // 6. Match conversations with profiles
+      return activeConversations.map(c => {
         const otherId = c.participant_1 === userId ? c.participant_2 : c.participant_1;
         const otherProfile = profileMap.get(otherId);
         return {
@@ -731,3 +774,36 @@ export const chatService = {
     return null;
   }
 };
+
+/**
+ * --- SUPABASE SQL LOGIC ---
+ * Copy and run these in your Supabase SQL Editor to automate cleanup:
+ * 
+ * -- 1. Function to delete conversation if its last message is deleted
+ * CREATE OR REPLACE FUNCTION delete_empty_conversation_on_message_delete()
+ * RETURNS TRIGGER AS $$
+ * BEGIN
+ *   IF NOT EXISTS (SELECT 1 FROM messages WHERE conversation_id = OLD.conversation_id) THEN
+ *     DELETE FROM conversations WHERE id = OLD.conversation_id;
+ *   END IF;
+ *   RETURN OLD;
+ * END;
+ * $$ LANGUAGE plpgsql;
+ * 
+ * -- 2. Trigger for message deletion
+ * CREATE TRIGGER trigger_cleanup_empty_conversation
+ * AFTER DELETE ON messages
+ * FOR EACH ROW
+ * EXECUTE FUNCTION delete_empty_conversation_on_message_delete();
+ * 
+ * -- 3. (Optional) Manual cleanup function for abandoned empty conversations (no messages ever sent)
+ * -- This deletes conversations created more than 1 hour ago that have no messages.
+ * CREATE OR REPLACE FUNCTION cleanup_abandoned_conversations()
+ * RETURNS void AS $$
+ * BEGIN
+ *   DELETE FROM conversations
+ *   WHERE id NOT IN (SELECT DISTINCT conversation_id FROM messages)
+ *   AND created_at < NOW() - INTERVAL '1 hour';
+ * END;
+ * $$ LANGUAGE plpgsql;
+ */

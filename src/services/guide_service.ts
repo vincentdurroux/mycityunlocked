@@ -8,6 +8,7 @@ export interface GuideArticle {
   content?: string;
   imageUrl?: string;
   businessName?: string;
+  isOnline?: boolean;
   author?: {
     name: string;
     role?: string;
@@ -51,17 +52,21 @@ export interface GuideCategory {
 //   content text,
 //   image_url text,
 //   business_name text,
+//   is_online boolean default true,
 //   author jsonb,
 //   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 // );
+// 
+// -- To add the column to an existing table:
+// -- ALTER TABLE guide_articles ADD COLUMN is_online boolean DEFAULT true;
 // 
 // -- Enable RLS
 // alter table guide_categories enable row level security;
 // alter table guide_articles enable row level security;
 // 
-// -- Allow public read access
+// -- Allow public read access (Only online articles for public)
 // create policy "Allow public read access on guide_categories" on guide_categories for select using (true);
-// create policy "Allow public read access on guide_articles" on guide_articles for select using (true);
+// create policy "Allow public read access on guide_articles" on guide_articles for select using (is_online = true);
 // 
 // -- Allow write access (for administrative seeding/updating)
 // create policy "Allow all actions for admin on categories" on guide_categories for all using (true);
@@ -393,7 +398,7 @@ export const guideService = {
       // Now fetch guide_articles
       const { data: dbArticles, error: artError } = await supabase
         .from('guide_articles')
-        .select('id, category_id, title, excerpt, tag, content, image_url, business_name, author');
+        .select('id, category_id, title, excerpt, tag, content, image_url, business_name, is_online, author');
 
       if (artError) {
         console.warn('Error fetching guide_articles from Supabase, table might not be created yet. Returning categories with empty articles list.', artError);
@@ -428,6 +433,7 @@ export const guideService = {
         content: art.content,
         imageUrl: art.image_url,
         businessName: art.business_name,
+        isOnline: art.is_online,
         author: art.author // stored as jsonb
       }));
 
@@ -474,6 +480,7 @@ export const guideService = {
           content: art.content || null,
           image_url: art.imageUrl || null,
           business_name: art.businessName || null,
+          is_online: art.isOnline !== undefined ? art.isOnline : true,
           author: art.author || null
         });
       if (error) {
@@ -517,6 +524,7 @@ export const guideService = {
           content: art.content || null,
           image_url: art.imageUrl || null,
           business_name: art.businessName || null,
+          is_online: art.isOnline !== undefined ? art.isOnline : true,
           author: art.author || null
         })
         .eq('id', art.id);
@@ -592,7 +600,8 @@ export const guideService = {
             tag: art.tag || null,
             content: art.content || null,
             image_url: art.imageUrl || null,
-            business_name: art.businessName || null,
+            business_name: art.business_name || null,
+            is_online: true,
             author: art.author || null
           });
         });

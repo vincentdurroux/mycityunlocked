@@ -80,7 +80,10 @@ import {
   EyeOff,
   XCircle,
   Flag,
-  Ban
+  Ban,
+  ShieldAlert,
+  Copy,
+  AlertTriangle
 } from 'lucide-react';
 import { storageService } from './lib/storage';
 import { marketplaceService, Ad } from './services/marketplaceService';
@@ -95,6 +98,8 @@ import { eventService } from './services/eventService';
 import { authService, Profile } from './services/authService';
 import { chatService, Conversation, Message } from './services/chatService';
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import { documentService } from './services/documentService';
 import { guideService, MOCK_GUIDE_CATEGORIES_DATA } from './services/guide_service';
 import { feedbackService } from './services/feedbackService';
@@ -407,6 +412,7 @@ interface GuideArticle {
   content?: string;
   imageUrl?: string;
   businessName?: string;
+  isOnline?: boolean;
   author?: {
     name: string;
     role?: string;
@@ -2242,9 +2248,9 @@ function AdDetailModal({ ad, onClose }: { ad: Ad | any, onClose: () => void }) {
 
             <div className="space-y-3">
               <h4 className="font-bold text-slate-900">Description</h4>
-              <p className="text-slate-600 leading-relaxed">
-                {ad.description || "No description provided for this item."}
-              </p>
+              <div className="markdown-body">
+                <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>{ad.description || "No description provided for this item."}</Markdown>
+              </div>
             </div>
 
             <div className="pt-4 border-t border-slate-100 flex gap-3">
@@ -2593,6 +2599,7 @@ function AdminView({
   const [articleFormContent, setArticleFormContent] = useState('');
   const [articleFormImageUrl, setArticleFormImageUrl] = useState('');
   const [articleFormBusinessName, setArticleFormBusinessName] = useState('');
+  const [articleFormIsOnline, setArticleFormIsOnline] = useState(true);
 
   const [articleFormAuthorName, setArticleFormAuthorName] = useState('');
   const [articleFormAuthorRole, setArticleFormAuthorRole] = useState('');
@@ -2672,6 +2679,7 @@ function AdminView({
     setArticleFormContent(art.content || '');
     setArticleFormImageUrl(art.imageUrl || art.image_url || '');
     setArticleFormBusinessName(art.businessName || art.business_name || '');
+    setArticleFormIsOnline(art.isOnline !== false);
     
     if (art.author) {
       setArticleFormAuthorName(art.author.name || '');
@@ -2719,6 +2727,7 @@ function AdminView({
         content: articleFormContent || undefined,
         imageUrl: articleFormImageUrl || undefined,
         businessName: articleFormBusinessName || undefined,
+        isOnline: articleFormIsOnline,
         author: authorObj || undefined
       };
 
@@ -3493,19 +3502,19 @@ function AdminView({
            </h3>
         </div>
 
-        <div className="flex flex-wrap bg-slate-100 p-1 rounded-2xl w-full border border-slate-200/50 gap-1">
+        <div className="grid grid-cols-3 md:flex md:flex-wrap bg-slate-100/80 p-1.5 rounded-[22px] w-full border border-slate-200/50 gap-1.5">
           <button 
             onClick={() => {
               setDashboardCategory('pros');
               setActiveTab('recommendations');
             }}
             className={cn(
-              "px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-              dashboardCategory === 'pros' ? "bg-white text-brand-blue shadow-sm" : "text-slate-400 hover:text-slate-600"
+              "px-1 py-3 rounded-[18px] text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2",
+              dashboardCategory === 'pros' ? "bg-white text-brand-blue shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"
             )}
           >
-            <Users className="w-4 h-4" />
-            Pros
+            <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="truncate">Pros</span>
           </button>
           <button 
             onClick={() => {
@@ -3513,49 +3522,12 @@ function AdminView({
               setActiveTab('add_event');
             }}
             className={cn(
-              "px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-              dashboardCategory === 'events' ? "bg-white text-emerald-500 shadow-sm" : "text-slate-400 hover:text-slate-600"
+              "px-1 py-3 rounded-[18px] text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2",
+              dashboardCategory === 'events' ? "bg-white text-emerald-500 shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"
             )}
           >
-            <Calendar className="w-4 h-4" />
-            Events
-          </button>
-          <button 
-            onClick={() => {
-              setDashboardCategory('testimonies');
-              setActiveTab('recommendations');
-            }}
-            className={cn(
-              "px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-              dashboardCategory === 'testimonies' ? "bg-white text-indigo-500 shadow-sm" : "text-slate-400 hover:text-slate-600"
-            )}
-          >
-            <MessageSquare className="w-4 h-4" />
-            Testimonies
-          </button>
-          <button 
-            onClick={() => {
-              setDashboardCategory('reported_users');
-            }}
-            className={cn(
-              "px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-              dashboardCategory === 'reported_users' ? "bg-white text-rose-500 shadow-sm" : "text-slate-400 hover:text-slate-600"
-            )}
-          >
-            <Flag className="w-4 h-4" />
-            Reports
-          </button>
-          <button 
-            onClick={() => {
-              setDashboardCategory('highlights');
-            }}
-            className={cn(
-              "px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-              dashboardCategory === 'highlights' ? "bg-white text-amber-500 shadow-sm" : "text-slate-400 hover:text-slate-600"
-            )}
-          >
-            <Star className="w-4 h-4" />
-            Highlights
+            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="truncate">Events</span>
           </button>
           <button 
             onClick={() => {
@@ -3564,12 +3536,49 @@ function AdminView({
               setEditingArticle(null);
             }}
             className={cn(
-              "px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-              dashboardCategory === 'guides' ? "bg-white text-orange-500 shadow-sm" : "text-slate-400 hover:text-slate-600"
+              "px-1 py-3 rounded-[18px] text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2",
+              dashboardCategory === 'guides' ? "bg-white text-orange-500 shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"
             )}
           >
-            <BookOpen className="w-4 h-4" />
-            Guides
+            <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="truncate">Guides</span>
+          </button>
+          <button 
+            onClick={() => {
+              setDashboardCategory('testimonies');
+              setActiveTab('recommendations');
+            }}
+            className={cn(
+              "px-1 py-3 rounded-[18px] text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2",
+              dashboardCategory === 'testimonies' ? "bg-white text-indigo-500 shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"
+            )}
+          >
+            <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="truncate">Reviews</span>
+          </button>
+          <button 
+            onClick={() => {
+              setDashboardCategory('highlights');
+            }}
+            className={cn(
+              "px-1 py-3 rounded-[18px] text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2",
+              dashboardCategory === 'highlights' ? "bg-white text-amber-500 shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"
+            )}
+          >
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="truncate">Spotlight</span>
+          </button>
+          <button 
+            onClick={() => {
+              setDashboardCategory('reported_users');
+            }}
+            className={cn(
+              "px-1 py-3 rounded-[18px] text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2",
+              dashboardCategory === 'reported_users' ? "bg-white text-rose-500 shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"
+            )}
+          >
+            <ShieldAlert className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="truncate">Safety</span>
           </button>
         </div>
       </div>
@@ -3726,6 +3735,7 @@ function AdminView({
                   setArticleFormAuthorWebsite('');
                   setArticleFormAuthorEmail('');
                   setArticleFormAuthorPhone('');
+                  setArticleFormIsOnline(true);
                   
                   setShowArticleForm(true);
                 }}
@@ -5307,6 +5317,32 @@ function AdminView({
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">Online Status</label>
+                  <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-150 w-full sm:w-fit">
+                    <button
+                      type="button"
+                      onClick={() => setArticleFormIsOnline(true)}
+                      className={cn(
+                        "flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all",
+                        articleFormIsOnline ? "bg-emerald-500 text-white shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                      )}
+                    >
+                      Article Online
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setArticleFormIsOnline(false)}
+                      className={cn(
+                        "flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all",
+                        !articleFormIsOnline ? "bg-slate-400 text-white shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                      )}
+                    >
+                      Draft / Offline
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
                   <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">Title</label>
                   <input
                     type="text"
@@ -5560,38 +5596,43 @@ function AdminView({
                             {art.imageUrl && (
                               <img src={art.imageUrl} alt={art.title} className="w-20 h-16 object-cover rounded-xl bg-slate-100 shrink-0 border border-slate-100" referrerPolicy="no-referrer" />
                             )}
-                            <div className="min-w-0 flex-1 text-left space-y-1">
+                            <div className="min-w-0 flex-1 text-left space-y-1.5">
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-[10px] bg-sky-50 text-sky-600 border border-sky-100 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">
+                                <span className="text-[10px] bg-sky-50 text-sky-600 border border-sky-100 px-2.5 py-1 rounded-md font-bold uppercase tracking-wider">
                                   {art.tag || 'Housing'}
                                 </span>
-                                <span></span>
+                                {art.isOnline === false && (
+                                  <span className="text-[10px] bg-slate-100 text-slate-500 border border-slate-200 px-2.5 py-1 rounded-md font-bold uppercase tracking-wider inline-flex items-center gap-1">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                    Offline
+                                  </span>
+                                )}
                               </div>
-                              <h5 className="font-bold text-slate-900 text-sm truncate">{art.title}</h5>
-                              <p className="text-xs text-slate-500 font-medium line-clamp-1">{art.excerpt}</p>
+                              <h5 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">{art.title}</h5>
+                              <p className="text-xs text-slate-500 font-medium line-clamp-2 md:line-clamp-1">{art.excerpt}</p>
                             </div>
 
-                            <div className="flex items-center gap-2 self-stretch md:self-center justify-end">
+                            <div className="flex flex-row items-center gap-2 w-full md:w-auto justify-end md:justify-center border-t md:border-t-0 pt-3 md:pt-0 border-slate-100 mt-2 md:mt-0">
                               <button
                                 type="button"
                                 onClick={() => handleEditArticleClick(art, cat.id)}
-                                className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 text-[10px] font-bold uppercase tracking-wider rounded-xl border border-slate-200 transition-all flex items-center gap-1.5 shrink-0"
+                                className="flex-1 md:flex-none px-4 py-2.5 md:px-3.5 md:py-1.5 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 text-[10px] font-bold uppercase tracking-wider rounded-xl border border-slate-200 transition-all flex items-center justify-center gap-2 shrink-0 shadow-sm sm:shadow-none"
                               >
-                                <Edit2 className="w-3.5 h-3.5" />
-                                Edit
+                                <Edit2 className="w-4 h-4 md:w-3.5 md:h-3.5" />
+                                <span>Edit</span>
                               </button>
                               <button
                                 type="button"
                                 disabled={deletingArticleId === art.id}
                                 onClick={() => handleDeleteArticle(art.id)}
-                                className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[10px] font-bold uppercase tracking-wider rounded-xl border border-rose-100/50 transition-all flex items-center gap-1.5 shrink-0"
+                                className="flex-1 md:flex-none px-4 py-2.5 md:px-3.5 md:py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[10px] font-bold uppercase tracking-wider rounded-xl border border-rose-100/50 transition-all flex items-center justify-center gap-2 shrink-0 shadow-sm sm:shadow-none"
                               >
                                 {deletingArticleId === art.id ? (
                                   '...'
                                 ) : (
                                   <>
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    Delete
+                                    <Trash2 className="w-4 h-4 md:w-3.5 md:h-3.5" />
+                                    <span>Delete</span>
                                   </>
                                 )}
                               </button>
@@ -6501,7 +6542,7 @@ function HomeView({
 
           {/* Card 3: Guide Highlight */}
           {(() => {
-            const section3Items = allArticles.filter(art => highlightedArticleIds.includes(String(art.id)));
+            const section3Items = allArticles.filter(art => highlightedArticleIds.includes(String(art.id)) && art.isOnline !== false);
             if (section3Items.length === 0) return null;
 
             const activeIndex = sec3Idx % section3Items.length;
@@ -6747,16 +6788,8 @@ function ExpertGuideModal({ isOpen, onClose, article }: { isOpen: boolean, onClo
               )}
 
               {/* Guide Content - Simple and highly readable text */}
-              <div className="space-y-6 text-slate-650 leading-relaxed text-base md:text-[17px]">
-                {article.content ? (
-                  article.content.split('\n\n').map((paragraph: string, idx: number) => (
-                    <p key={idx} className="whitespace-pre-line text-slate-600">
-                      {paragraph}
-                    </p>
-                  ))
-                ) : (
-                  <p className="text-slate-400 italic">No content available for this guide.</p>
-                )}
+              <div className="markdown-body">
+                <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>{article.content}</Markdown>
               </div>
 
               {/* Call to Action Section - Optionnel (rendered only if author has contact info or website) */}
@@ -7517,236 +7550,330 @@ ${JSON.stringify(proListBrief, null, 2)}`,
   return (
     <div className="p-4 md:p-12 pt-20 md:pt-24 space-y-16 pb-32 max-w-7xl mx-auto">
       {/* Search & Filters */}
-      <div className="space-y-16">
-        <div className="max-w-5xl space-y-6">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center justify-end gap-2 mb-2">
-              <div className="bg-slate-100 rounded-full p-1 flex items-center">
-                <button 
-                  onClick={() => setSearchMode('standard')} 
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${searchMode === 'standard' ? 'bg-white shadow-sm text-brand-blue' : 'text-slate-500 hover:text-brand-blue'}`}
-                >
-                  Standard
-                </button>
-                <button 
-                  onClick={() => setSearchMode('ai')} 
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${searchMode === 'ai' ? 'bg-white shadow-sm text-violet-600' : 'text-slate-500 hover:text-violet-600'}`}
-                >
-                  AI Search
-                </button>
-              </div>
-            </div>
-            <h2 className="text-2xl md:text-4xl font-normal font-display text-brand-navy tracking-tight leading-tight">
-              Find exactly who you are <span className={`italic font-medium transition-colors ${searchMode === 'ai' ? 'text-violet-600' : 'text-brand-blue'}`}>looking for.</span>
-            </h2>
-          </div>
-
-          <div className="relative group flex flex-col md:flex-row items-stretch md:items-center gap-3">
-            <div className="relative flex-1 w-full min-w-0">
-              {searchMode === 'ai' ? (
-                <Sparkles className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-violet-400 group-focus-within:text-violet-600 transition-colors" />
-              ) : (
-                <Search className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-blue-400 group-focus-within:text-blue-600 transition-colors" />
-              )}
-              <input 
-                ref={inputRef}
-                type="text" 
-                placeholder={searchMode === 'ai' ? "Describe what you need..." : "Search pros or skills..."}
-                className={`w-full pl-10 sm:pl-14 pr-12 py-3.5 sm:py-4 bg-white rounded-2xl border border-slate-100 focus:ring-4 ${searchMode === 'ai' ? 'focus:ring-violet-600/5 focus:border-violet-600/30' : 'focus:ring-blue-600/5 focus:border-blue-600/30'} outline-none shadow-sm hover:shadow-md transition-all text-slate-700 font-medium text-[13px] sm:text-base placeholder:text-slate-300 text-ellipsis overflow-hidden whitespace-nowrap`}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onFocus={() => setIsInputFocused(true)}
-                onBlur={() => setTimeout(() => setIsInputFocused(false), 200)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    if (searchMode === 'ai') {
-                      handleSearchSubmit();
-                    } else {
-                      // Scroll logic for standard mode only if results appear
-                      if (checkMatches(search)) {
-                        document.getElementById('pro-cards-list')?.scrollIntoView({ behavior: 'smooth' });
-                      }
-                    }
-                  }
-                }}
-              />
-
-                <AnimatePresence>
-                  {search && (
-                    <motion.button
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      onClick={() => setSearch('')}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-300 hover:text-slate-500 transition-colors"
-                    >
-                      <RotateCcw className="w-5 h-5" />
-                    </motion.button>
-                  )}
-                </AnimatePresence>
-              </div>
+      <div className="space-y-10">
+        <div className="max-w-2xl mx-auto space-y-6">
+          
+          {/* Top Segmented Tabs Indicator */}
+          <div className="flex justify-center mb-6">
+            <div className="bg-slate-100/80 p-1.5 rounded-full flex items-center gap-1 border border-slate-200/50">
               <button 
                 onClick={() => {
-                  if (searchMode === 'ai') {
-                    handleSearchSubmit();
-                  } else {
+                  setSearchMode('standard');
+                  setSearch('');
+                  setDeferredSearch('');
+                  setAiResults(null);
+                  setAiQuery('');
+                }} 
+                className={`px-5 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${searchMode === 'standard' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-800'}`}
+              >
+                <Search className="w-3.5 h-3.5 animate-none" />
+                Search
+              </button>
+              <button 
+                onClick={() => {
+                  setSearchMode('ai');
+                  setSearch('');
+                  setDeferredSearch('');
+                  setAiResults(null);
+                  setAiQuery('');
+                }} 
+                className={`px-5 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${searchMode === 'ai' ? 'bg-white shadow-sm text-violet-600' : 'text-slate-500 hover:text-slate-800'}`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Ask Jane
+              </button>
+            </div>
+          </div>
+
+          {/* Standard Search Interface */}
+          {searchMode === 'standard' ? (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="text-left space-y-2">
+                <h2 className="text-3xl md:text-4xl font-semibold font-display text-slate-900 tracking-tight leading-tight">
+                  Find exactly who you are <br /> 
+                  <span className="text-brand-blue font-semibold">looking for.</span>
+                </h2>
+              </div>
+
+              <div className="space-y-4">
+                {/* Search Input Box */}
+                <div className="relative bg-white rounded-[24px] border border-slate-200/80 p-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] space-y-1.5 focus-within:border-brand-blue/40 focus-within:ring-4 focus-within:ring-brand-blue/5 transition-all">
+                  <div className="flex items-center gap-3">
+                    <Search className="w-5 h-5 text-brand-blue flex-shrink-0" />
+                    <input 
+                      ref={inputRef}
+                      type="text" 
+                      placeholder="Search profession or skill"
+                      className="w-full bg-transparent outline-none text-slate-800 font-bold leading-tight placeholder:text-slate-300 text-sm md:text-base border-none p-0 focus:ring-0"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      onFocus={() => setIsInputFocused(true)}
+                      onBlur={() => setTimeout(() => setIsInputFocused(false), 200)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          setDeferredSearch(search);
+                          if (checkMatches(search)) {
+                            document.getElementById('pro-cards-list')?.scrollIntoView({ behavior: 'smooth' });
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-slate-400 font-medium ml-8">
+                    e.g. Dentist, Plumber, Accountant, Nanny...
+                  </p>
+                </div>
+
+                {/* Big Search Action Button */}
+                <button 
+                  onClick={() => {
                     setDeferredSearch(search);
                     if (checkMatches(search)) {
                       document.getElementById('pro-cards-list')?.scrollIntoView({ behavior: 'smooth' });
                     }
-                  }
-                }}
-                className={`flex items-center justify-center gap-2 px-8 py-4 md:py-5 ${searchMode === 'ai' ? 'bg-gradient-to-r from-violet-600 to-indigo-600' : 'bg-gradient-to-r from-blue-600 to-cyan-600'} text-white rounded-[24px] font-bold shadow-lg ${searchMode === 'ai' ? 'shadow-indigo-600/20' : 'shadow-blue-600/20'} hover:brightness-110 ${searchMode === 'ai' ? 'hover:shadow-indigo-600/30' : 'hover:shadow-blue-600/30'} transition-all active:scale-95 disabled:opacity-50 w-full md:w-auto`}
-                disabled={aiLoading}
-              >
-                {searchMode === 'ai' ? (
-                  aiLoading ? (
+                  }}
+                  className="w-full py-4.5 bg-brand-blue hover:brightness-115 active:scale-[0.98] text-white rounded-[24px] font-bold text-sm md:text-base shadow-lg shadow-brand-blue/15 transition-all flex items-center justify-center gap-2.5"
+                >
+                  <Search className="w-5 h-5" />
+                  Search
+                </button>
+              </div>
+
+              {/* No Results banner */}
+              <AnimatePresence>
+                {hasActiveFilter && !aiLoading && filteredPros.length === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="p-4 bg-amber-50/60 rounded-2xl border border-amber-100/50 text-amber-900 text-xs md:text-sm font-medium flex items-center gap-3 shadow-sm"
+                  >
+                    <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                    <span>No matches found. Try using other keywords or clearing some filters! 🌟</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Filters Section */}
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Refine your search</p>
+                
+                <div className="grid grid-cols-2 gap-4 md:gap-x-6 md:gap-y-4">
+                  {/* Profession Dropdown */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <Filter className="w-3.5 h-3.5 text-brand-blue" /> Profession
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-full pl-4 pr-10 py-3.5 bg-white rounded-2xl border border-slate-200/70 hover:border-slate-300 focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue/20 outline-none shadow-sm hover:shadow-md transition-all text-slate-700 font-bold text-xs md:text-sm appearance-none cursor-pointer"
+                      >
+                        <option value="All">All Professions</option>
+                        {allProfessions.map(prof => (
+                          <option key={prof} value={prof}>{prof}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <ChevronDown className="w-4 h-4 text-slate-400" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Language Dropdown */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5 text-brand-blue" /> Language
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={selectedLanguage}
+                        onChange={(e) => setSelectedLanguage(e.target.value)}
+                        className="w-full pl-4 pr-10 py-3.5 bg-white rounded-2xl border border-slate-200/70 hover:border-slate-300 focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue/20 outline-none shadow-sm hover:shadow-md transition-all text-slate-700 font-bold text-xs md:text-sm appearance-none cursor-pointer"
+                      >
+                        {languages.map(lang => (
+                          <option key={lang} value={lang}>{lang === 'All' ? 'All Languages' : lang}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <ChevronDown className="w-4 h-4 text-slate-400" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Distance Slider */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-rose-500" /> Distance ({maxDistance === 'All' ? '∞' : `${maxDistance}km`})
+                    </label>
+                    <div className="px-4 py-4 bg-white rounded-2xl border border-slate-200/70 shadow-sm flex flex-col gap-2 min-h-[60px] justify-center hover:border-slate-300 transition-all">
+                      <input
+                        type="range"
+                        min="5"
+                        max="50"
+                        step="5"
+                        value={maxDistance === 'All' ? 50 : maxDistance}
+                        onChange={(e) => setMaxDistance(Number(e.target.value))}
+                        className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                      />
+                      <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                        <span>Any distance</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Rating Star Selection */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <Star className="w-3.5 h-3.5 text-brand-yellow" /> Rating
+                    </label>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3.5 py-3.5 bg-white rounded-2xl border border-slate-200/70 shadow-sm min-h-[60px] hover:border-slate-300 transition-all">
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setMinRating(minRating === s ? 0 : s)}
+                            className="p-0.5"
+                          >
+                            <Star className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4 transition-colors", s <= minRating ? "text-brand-yellow fill-brand-yellow" : "text-slate-200")} />
+                          </button>
+                        ))}
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap self-start sm:self-center">
+                        {minRating > 0 ? `${minRating}.0+` : 'Any rating'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* AI Ask Jane Search Interface */
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="text-left space-y-1">
+                <h2 className="text-3xl md:text-4xl font-semibold font-display text-slate-900 tracking-tight leading-tight">
+                  <span className="text-violet-600 font-semibold">Not sure</span> who you need?
+                </h2>
+                <p className="text-slate-500 text-sm md:text-base leading-relaxed">
+                  Describe your situation and Jane will help.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {/* Purple Bordered Ask Jane Container */}
+                <div className="relative bg-white rounded-[24px] border-2 border-violet-200/90 p-5 shadow-[0_4px_24px_rgba(109,40,217,0.02)] space-y-2 focus-within:border-violet-400 focus-within:ring-4 focus-within:ring-violet-500/5 transition-all">
+                  <div className="flex items-start gap-3">
+                    <Sparkles className="w-5 h-5 text-violet-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 space-y-1">
+                      <label className="block text-[10px] sm:text-[11px] font-extrabold text-violet-500 uppercase tracking-wider">
+                        Tell Jane about your situation...
+                      </label>
+                      <textarea 
+                        ref={inputRef as any}
+                        rows={3}
+                        placeholder="e.g. I just moved to Valencia and need help with residency paperwork in English"
+                        className="w-full bg-transparent outline-none text-slate-700 font-medium leading-relaxed placeholder:text-slate-300 text-xs sm:text-sm border-none p-0 focus:ring-0 resize-none"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSearchSubmit();
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Suggestions Section */}
+                <div className="space-y-2.5 pt-1">
+                  <p className="text-xs font-bold text-slate-400 tracking-wide text-left">
+                    Try asking something like:
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {[
+                      "I need an English-speaking dentist near L'Eliana",
+                      "Help me with my tax declaration as an expat",
+                      "My pool is green and I don't know who to call"
+                    ].map((suggestion, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setSearch(suggestion);
+                          setTimeout(() => {
+                            inputRef.current?.focus();
+                          }, 50);
+                        }}
+                        className="text-left px-4 py-3 bg-violet-50/40 hover:bg-violet-50 hover:text-violet-900 border border-violet-100/30 rounded-2xl text-xs font-semibold text-slate-600 transition-all leading-normal active:scale-[0.99]"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Large Purple Recommendations Action Button */}
+                <button 
+                  onClick={handleSearchSubmit}
+                  disabled={aiLoading || !search.trim()}
+                  className="w-full py-4.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:brightness-110 active:scale-[0.98] text-white rounded-[24px] font-bold text-sm md:text-base shadow-lg shadow-violet-500/15 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50"
+                >
+                  {aiLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <Sparkles className="w-5 h-5 fill-white/20 animate-pulse" />
-                  )
-                ) : (
-                  <Search className="w-5 h-5" />
+                    <Sparkles className="w-5 h-5 fill-white/10" />
+                  )}
+                  Get Recommendations
+                </button>
+
+                {/* Privacy Safeguard Note */}
+                <div className="flex items-center justify-center gap-1.5 text-slate-400 font-bold text-[10px] md:text-[11px] tracking-wide pt-1 text-center">
+                  <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>100% private. Jane is here to help.</span>
+                </div>
+              </div>
+
+              {/* No Results banner */}
+              <AnimatePresence>
+                {hasActiveFilter && !aiLoading && filteredPros.length === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="p-4 bg-amber-50/60 rounded-2xl border border-amber-100/50 text-amber-900 text-xs md:text-sm font-medium flex items-center gap-3 shadow-sm"
+                  >
+                    <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                    <span>No matches found. Try using other keywords or asking Jane another question! 🌟</span>
+                  </motion.div>
                 )}
-                {searchMode === 'ai' ? (aiLoading ? "Jane is searching..." : "Search with Jane") : "Search"}
-              </button>
-            </div>
+              </AnimatePresence>
 
-            {searchMode === 'ai' && (
-              <p className="text-xs text-slate-400 font-medium">
-                💡 <span className="font-semibold text-slate-500">Suggestions:</span> "I am looking for a bilingual Spanish plumber", "A real estate lawyer with great reviews", "Trustworthy English-speaking nanny"
-              </p>
-            )}
-
-            {/* No Results banner */}
-            <AnimatePresence>
-              {hasActiveFilter && !aiLoading && filteredPros.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="p-4 bg-amber-50/60 rounded-2xl border border-amber-100/50 text-amber-900 text-xs md:text-sm font-medium flex items-center gap-3 shadow-sm"
-                >
-                  <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-                  <span>No matches found. Try using other keywords or clearing some filters! 🌟</span>
-                </motion.div>
+              {/* AI Error banner */}
+              {aiError && (
+                <div className="p-4 bg-red-50 text-red-700 rounded-2xl border border-red-100 flex items-center gap-3 text-sm">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  <span>{aiError}</span>
+                </div>
               )}
-            </AnimatePresence>
 
-            {/* AI Error banner */}
-            {aiError && (
-              <div className="p-4 bg-red-50 text-red-700 rounded-2xl border border-red-100 flex items-center gap-3 text-sm">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <span>{aiError}</span>
-              </div>
-            )}
-
-
-
-            {/* Skeleton / Loading pulse for AI mapping */}
-            {aiLoading && (
-              <div className="p-8 bg-violet-50/40 rounded-3xl border border-indigo-100/40 flex flex-col items-center justify-center text-center space-y-4">
-                <div className="w-12 h-12 bg-violet-600/10 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-violet-600 animate-spin" />
+              {/* Skeleton / Loading pulse for AI mapping */}
+              {aiLoading && (
+                <div className="p-8 bg-violet-50/40 rounded-3xl border border-indigo-100/40 flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="w-12 h-12 bg-violet-600/10 rounded-full flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-violet-600 animate-spin" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-violet-900">Jane is analyzing your request...</p>
+                    <p className="text-xs text-slate-400 max-w-sm">Jane is searching our database of recommended professionals to find the perfect matches.</p>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-bold text-violet-900">Jane is analyzing your request...</p>
-                  <p className="text-xs text-slate-400 max-w-sm">Jane is searching our database of recommended professionals to find the perfect matches.</p>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Filters Grid */}
-          <div className="grid grid-cols-2 gap-4 md:gap-x-8 md:gap-y-6 pt-4">
-            {/* Profession Dropdown */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <Filter className="w-3.5 h-3.5 text-brand-blue" /> Profession
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full pl-4 pr-10 py-3.5 bg-white rounded-2xl border border-slate-100 focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue/20 outline-none shadow-sm hover:shadow-md transition-all text-slate-700 font-bold text-xs md:text-sm appearance-none cursor-pointer"
-                >
-                  <option value="All">All Professions</option>
-                  {allProfessions.map(prof => (
-                    <option key={prof} value={prof}>{prof}</option>
-                  ))}
-                </select>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <ChevronDown className="w-4 h-4 text-slate-400" />
-                </div>
-              </div>
+              )}
             </div>
+          )}
 
-            {/* Language Dropdown */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <Globe className="w-3.5 h-3.5 text-brand-blue" /> Language
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedLanguage}
-                  onChange={(e) => setSelectedLanguage(e.target.value)}
-                  className="w-full pl-4 pr-10 py-3.5 bg-white rounded-2xl border border-slate-100 focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue/20 outline-none shadow-sm hover:shadow-md transition-all text-slate-700 font-bold text-xs md:text-sm appearance-none cursor-pointer"
-                >
-                  {languages.map(lang => (
-                    <option key={lang} value={lang}>{lang === 'All' ? 'All Languages' : lang}</option>
-                  ))}
-                </select>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <ChevronDown className="w-4 h-4 text-slate-400" />
-                </div>
-              </div>
-            </div>
-
-            {/* Distance Filter Slider */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center px-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-rose-500" /> Distance ({maxDistance === 'All' ? '∞' : `${maxDistance}km`})
-                </label>
-              </div>
-              <div className="px-3 py-4 bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-2 min-h-[60px] md:min-h-[66px] justify-center">
-                <input
-                  type="range"
-                  min="5"
-                  max="50"
-                  step="5"
-                  value={maxDistance === 'All' ? 50 : maxDistance}
-                  onChange={(e) => setMaxDistance(Number(e.target.value))}
-                  className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-rose-500"
-                />
-              </div>
-            </div>
-
-            {/* Rating Filter stars */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <Star className="w-3.5 h-3.5 text-brand-yellow" /> Rating
-              </label>
-              <div className="flex items-center gap-2 px-3 py-3 bg-white rounded-2xl border border-slate-100 shadow-sm min-h-[60px] md:min-h-[66px]">
-                <div className="flex items-center gap-0.5">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setMinRating(minRating === s ? 0 : s)}
-                      className="p-0.5"
-                    >
-                      <Star className={cn("w-4 h-4 md:w-5 md:h-5 transition-colors", s <= minRating ? "text-brand-yellow fill-brand-yellow" : "text-slate-200")} />
-                    </button>
-                  ))}
-                </div>
-                <span className="hidden sm:inline ml-auto text-[10px] font-bold text-slate-400">
-                  {minRating > 0 ? `${minRating}.0+` : 'Any'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Active AI search indicator placed below the filters */}
+          {/* Active AI search indicator placed below */}
           {aiQuery && aiResults && !aiLoading && (
             <div className="p-4 bg-violet-50 text-violet-800 rounded-2xl border border-violet-100 flex flex-wrap items-center justify-between gap-3 text-sm transition-all duration-300">
               <div className="flex items-center gap-2">
@@ -7766,6 +7893,7 @@ ${JSON.stringify(proListBrief, null, 2)}`,
               </button>
             </div>
           )}
+        </div>
       </div>
 
       <div className="pt-8" id="results-section">
@@ -9234,10 +9362,8 @@ function ProfessionalDetailView({
                   <div className="w-2 h-2 rounded-full bg-brand-blue" />
                   <h4 className="text-lg font-semibold text-slate-900 font-display uppercase tracking-wider">About</h4>
                 </div>
-                <div className="relative">
-                  <p className="text-slate-600 leading-relaxed text-base font-medium transition-all duration-300">
-                    {pro.bio}
-                  </p>
+                <div className="markdown-body">
+                  <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>{pro.bio}</Markdown>
                 </div>
               </section>
 
@@ -9661,11 +9787,10 @@ function EventDetailModal({ event, onClose }: { event: Event, onClose: () => voi
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="font-bold text-slate-900">About this event</h3>
-            <p className="text-slate-600 leading-relaxed text-sm">
+          <div className="markdown-body">
+            <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>
               {event.description || `Join us for ${event.title} at ${event.location}! This is a great opportunity to meet new people and enjoy the local atmosphere.`}
-            </p>
+            </Markdown>
           </div>
 
           {event.coordinates && (
@@ -9735,11 +9860,13 @@ function GuidesView({ initialGuideId, onModalClose, scrollToTop }: { initialGuid
       try {
         const raw = await guideService.getGuideCategories();
         const flattened = raw.flatMap(cat => 
-          cat.articles.map((article: any) => ({
-            ...article,
-            categoryTitle: cat.title,
-            categoryColor: cat.color,
-          }))
+          cat.articles
+            .filter((article: any) => article.isOnline !== false)
+            .map((article: any) => ({
+              ...article,
+              categoryTitle: cat.title,
+              categoryColor: cat.color,
+            }))
         );
         if (active) {
           setArticles(flattened);
@@ -10257,6 +10384,16 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
   const [conversations, setConversations] = useState<any[]>([]);
   const [loadingConversations, setLoadingConversations] = useState(false);
 
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [activeSettingsView, setActiveSettingsView] = useState<'main' | 'security'>('main');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showSqlInstruction, setShowSqlInstruction] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
+
+  const sqlScript = `-- 1. Create public.archive_profiles table\\nCREATE TABLE IF NOT EXISTS public.archive_profiles (\\n  id uuid PRIMARY KEY,\\n  email text NOT NULL,\\n  full_name text,\\n  deleted_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL\\n);\\n\\n-- Enable Row Level Security (RLS)\\nALTER TABLE public.archive_profiles ENABLE ROW LEVEL SECURITY;\\n\\n-- 2. Create the delete function with automatic archiving\\nCREATE OR REPLACE FUNCTION public.delete_own_user()\\nRETURNS void AS $$\\nBEGIN\\n  -- Archive the profile\\n  INSERT INTO public.archive_profiles (id, email, full_name, deleted_at)\\n  SELECT id, email, full_name, now()\\n  FROM public.profiles\\n  WHERE id = auth.uid()\\n  ON CONFLICT (id) DO NOTHING;\\n\\n  -- Delete from auth.users (will cascade delete public.profiles)\\n  DELETE FROM auth.users\\n  WHERE id = auth.uid();\\nEND;\\n$$ LANGUAGE plpgsql SECURITY DEFINER;`;
+
   const fetchMyConversations = async () => {
     if (!currentUser) return;
     setLoadingConversations(true);
@@ -10290,6 +10427,12 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
       fetchMyConversations();
     }
   }, [activeSubPage, userProfile]);
+
+  useEffect(() => {
+    if (activeSubPage !== 'Settings') {
+      setActiveSettingsView('main');
+    }
+  }, [activeSubPage]);
 
   useEffect(() => {
     scrollToTop?.();
@@ -10356,12 +10499,35 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
     }
   };
 
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    setDeleteError(null);
+    try {
+      await authService.deleteOwnAccount();
+      await authService.signOut();
+      onNavigate?.('home');
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      if (
+        error.message?.includes('delete_own_user') || 
+        error.code === '42883' || 
+        error.code === 'P0001'
+      ) {
+        setShowSqlInstruction(true);
+        setDeleteError("The 'delete_own_user' archiving and unregistration function or the 'archive_profiles' table must be installed in Supabase. Please execute the SQL script below to set it up.");
+      } else {
+        setDeleteError(error.message || "An error occurred during account deletion.");
+      }
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
   const menuItems = [
     { label: 'My Account', icon: User, color: 'text-brand-blue font-bold text-brand-blue' },
     ...(isAdmin ? [{ label: 'Admin Dashboard', icon: ShieldCheck, color: 'text-brand-blue', action: () => onNavigate?.('admin') }] : []),
     { label: 'Suggest a Pro', icon: Star, color: 'text-brand-yellow', action: () => onAddPro?.() },
     { label: 'Feedback', icon: MessageSquare, color: 'text-[#00C2A8]' },
-    { label: 'Account Security', icon: Shield },
     { label: 'Settings', icon: SlidersHorizontal },
     { label: 'Support', icon: HelpCircle },
     { label: 'About', icon: Info },
@@ -10824,114 +10990,169 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
                 </div>
               </div>
 
-            </div>
-          </ProfileSubPage>
-        )}
 
-        {activeSubPage === 'Account Security' && (
-          <ProfileSubPage key="subpage-account-security" title="Account Security" onBack={() => setActiveSubPage(null)}>
-            <div className="space-y-6">
-              <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="font-bold text-slate-900">Two-Factor Authentication</p>
-                    <p className="text-xs text-slate-500">Add an extra layer of security to your account.</p>
-                  </div>
-                  <div className="w-12 h-6 bg-slate-200 rounded-full relative cursor-pointer">
-                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm" />
-                  </div>
-                </div>
-              </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4">
-                <p className="font-bold text-slate-900">Change Password</p>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700">Current Password</label>
-                    <input type="password" placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-blue outline-none" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700">New Password</label>
-                    <input type="password" placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-blue outline-none" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700">Confirm New Password</label>
-                    <input type="password" placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-blue outline-none" />
-                  </div>
-                  <button className="w-full py-4 bg-brand-blue text-white rounded-2xl font-bold shadow-lg shadow-brand-blue/20 mt-4">
-                    Update Password
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4">
-                <p className="font-bold text-slate-900">Login History</p>
-                <div className="space-y-4">
-                  {[
-                    { device: 'iPhone 15 Pro', location: 'Valencia, ES', time: 'Active now' },
-                    { device: 'MacBook Air', location: 'Valencia, ES', time: '2 hours ago' }
-                  ].map((login, i) => (
-                    <div key={i} className="flex justify-between items-center text-sm">
-                      <div>
-                        <p className="font-medium text-slate-700">{login.device}</p>
-                        <p className="text-xs text-slate-400">{login.location}</p>
-                      </div>
-                      <span className="text-xs text-slate-400">{login.time}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </ProfileSubPage>
         )}
 
         {activeSubPage === 'Settings' && (
           <ProfileSubPage key="subpage-settings" title="Settings" onBack={() => setActiveSubPage(null)}>
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-              {[
-                { 
-                  title: 'Chat Participation', 
-                  desc: 'Allow receiving and sending chat messages',
-                  enabled: userProfile?.chat_enabled ?? true,
-                  action: async () => {
-                    if (userProfile) {
-                      try {
-                        const nextValue = userProfile.chat_enabled === undefined ? false : !userProfile.chat_enabled;
-                        await authService.updateProfile({ 
-                          id: userProfile.id, 
-                          chat_enabled: nextValue 
-                        });
-                        onProfileUpdate?.();
-                      } catch (err) {
-                        console.error('Error updating chat participation:', err);
+            <div className="space-y-6">
+              {/* Account Security Option Link */}
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-1">
+                <button
+                  onClick={() => setActiveSettingsView('security')}
+                  className="w-full p-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center flex-shrink-0 text-slate-500">
+                      <Shield className="w-5 h-5 text-slate-500" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-800 text-sm">Account Security</p>
+                      <p className="text-[11px] text-slate-400">Update password, 2FA settings and login history</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-slate-300" />
+                </button>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                {[
+                  { 
+                    title: 'Chat Participation', 
+                    desc: 'Allow receiving and sending chat messages',
+                    enabled: userProfile?.chat_enabled ?? true,
+                    action: async () => {
+                      if (userProfile) {
+                        try {
+                          const nextValue = userProfile.chat_enabled === undefined ? false : !userProfile.chat_enabled;
+                          await authService.updateProfile({ 
+                            id: userProfile.id, 
+                            chat_enabled: nextValue 
+                          });
+                          onProfileUpdate?.();
+                        } catch (err) {
+                          console.error('Error updating chat participation:', err);
+                        }
                       }
                     }
                   }
-                }
-              ].map((item, i) => (
-                <div key={i} className={cn(
-                  "p-6 flex items-center justify-between",
-                  i !== 0 && "border-b border-slate-50"
-                )}>
-                  <div className="space-y-1">
-                    <p className="font-bold text-slate-900">{item.title}</p>
-                    <p className="text-xs text-slate-500">{item.desc}</p>
-                  </div>
-                  <div 
-                    onClick={item.action}
-                    className={cn(
-                    "w-12 h-6 rounded-full relative transition-colors",
-                    item.action ? "cursor-pointer" : "opacity-50 cursor-not-allowed",
-                    item.enabled ? "bg-brand-blue" : "bg-slate-200"
+                ].map((item, i) => (
+                  <div key={i} className={cn(
+                    "p-6 flex items-center justify-between",
+                    i !== 0 && "border-b border-slate-50"
                   )}>
-                    <div className={cn(
-                      "absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all",
-                      item.enabled ? "right-1" : "left-1"
-                    )} />
+                    <div className="space-y-1">
+                      <p className="font-bold text-slate-900">{item.title}</p>
+                      <p className="text-xs text-slate-500">{item.desc}</p>
+                    </div>
+                    <div 
+                      onClick={item.action}
+                      className={cn(
+                      "w-12 h-6 rounded-full relative transition-colors",
+                      item.action ? "cursor-pointer" : "opacity-50 cursor-not-allowed",
+                      item.enabled ? "bg-brand-blue" : "bg-slate-200"
+                    )}>
+                      <div className={cn(
+                        "absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all",
+                        item.enabled ? "right-1" : "left-1"
+                      )} />
+                    </div>
                   </div>
+                ))}
+              </div>
+
+              {/* Discrete Delete Account */}
+              <div className="pt-4 border-t border-slate-100/70">
+                <div className="px-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-semibold text-slate-700">Close Account</p>
+                    <p className="text-[11px] text-slate-400 leading-normal">
+                      Permanently remove your profile and archive your membership info securely.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowConfirmDelete(true);
+                      setDeleteError(null);
+                      setShowSqlInstruction(false);
+                      setDeleteConfirmText("");
+                    }}
+                    className="self-start sm:self-center px-3 py-1.5 hover:bg-rose-50/50 border border-slate-200 hover:border-rose-200 text-slate-500 hover:text-rose-600 font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all"
+                  >
+                    Delete Account
+                  </button>
                 </div>
-              ))}
+              </div>
+
             </div>
+
+            {/* Nested Account Security View */}
+            <AnimatePresence>
+              {activeSettingsView === 'security' && (
+                <ProfileSubPage 
+                  key="nested-security" 
+                  title="Account Security" 
+                  className="bg-slate-50 z-[70]"
+                  onBack={() => setActiveSettingsView('main')}
+                >
+                  <div className="space-y-6">
+                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <p className="font-bold text-slate-900">Two-Factor Authentication</p>
+                          <p className="text-xs text-slate-500">Add an extra layer of security to your account.</p>
+                        </div>
+                        <div className="w-12 h-6 bg-slate-200 rounded-full relative cursor-pointer">
+                          <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4">
+                      <p className="font-bold text-slate-900">Change Password</p>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-slate-700">Current Password</label>
+                          <input type="password" placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-blue outline-none" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-slate-700">New Password</label>
+                          <input type="password" placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-blue outline-none" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-slate-700">Confirm New Password</label>
+                          <input type="password" placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-blue outline-none" />
+                        </div>
+                        <button className="w-full py-4 bg-brand-blue text-white rounded-2xl font-bold shadow-lg shadow-brand-blue/20 mt-4">
+                          Update Password
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4">
+                      <p className="font-bold text-slate-900">Login History</p>
+                      <div className="space-y-4">
+                        {[
+                          { device: 'iPhone 15 Pro', location: 'Valencia, ES', time: 'Active now' },
+                          { device: 'MacBook Air', location: 'Valencia, ES', time: '2 hours ago' }
+                        ].map((login, i) => (
+                          <div key={i} className="flex justify-between items-center text-sm">
+                            <div>
+                              <p className="font-medium text-slate-700">{login.device}</p>
+                              <p className="text-xs text-slate-400">{login.location}</p>
+                            </div>
+                            <span className="text-xs text-slate-400">{login.time}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </ProfileSubPage>
+              )}
+            </AnimatePresence>
           </ProfileSubPage>
         )}
 
@@ -11024,7 +11245,7 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
                 ) : (
                   <div className="text-slate-700 leading-relaxed font-sans space-y-6 text-sm sm:text-base">
                     <div className="markdown-body">
-                      <Markdown>{docContent}</Markdown>
+                      <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>{docContent}</Markdown>
                     </div>
                     <div className="pt-6 border-t border-slate-100 flex justify-start">
                       <button 
@@ -11040,6 +11261,138 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
               </div>
             </div>
           </ProfileSubPage>
+        )}
+
+        {showConfirmDelete && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (!isDeletingAccount) {
+                  setShowConfirmDelete(false);
+                  setDeleteError(null);
+                  setShowSqlInstruction(false);
+                  setDeleteConfirmText("");
+                }
+              }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white rounded-3xl border border-slate-105 shadow-2xl overflow-hidden max-w-md w-full relative z-10 p-6 space-y-6"
+            >
+              <div className="flex items-center gap-3 border-b border-rose-50 pb-4">
+                <div className="w-10 h-10 bg-rose-50 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse">
+                  <AlertTriangle className="w-5 h-5 text-rose-500" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-lg font-display">Delete Account</h3>
+                  <p className="text-xs text-rose-500 font-bold uppercase tracking-wider">This action is permanent</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Are you absolutely sure you want to delete your Unlocked account? This decision will have the following immediate consequences:
+                </p>
+
+                <div className="space-y-2.5 text-xs text-slate-550 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <div className="flex gap-2 items-start">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-450 mt-1.5 shrink-0" />
+                    <span><strong>Loss of Access</strong>: You will no longer be able to log into the application with your credentials.</span>
+                  </div>
+                  <div className="flex gap-2 items-start">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-450 mt-1.5 shrink-0" />
+                    <span><strong>Profile Erased</strong>: Your details, profile photo, and full name will be completely removed from the public directory.</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Type <span className="text-rose-600 font-extrabold text-[11px]">"DELETE"</span> to unlock account deletion:
+                  </label>
+                  <input
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="Type DELETE..."
+                    className="w-full px-4 py-3 bg-white border border-slate-200 focus:ring-2 focus:ring-rose-500/15 focus:border-rose-400 rounded-xl text-xs font-semibold text-slate-700 outline-none transition-all uppercase placeholder:text-slate-300"
+                  />
+                </div>
+
+                {deleteError && (
+                  <div className="p-4 bg-red-50/80 border border-red-100 rounded-xl space-y-3">
+                    <p className="text-xs text-red-600 font-bold">{deleteError}</p>
+                    {showSqlInstruction && (
+                      <div className="space-y-2">
+                        <p className="text-[11px] text-slate-500 leading-normal">
+                          To enable custom account deletion and archiving, please run the following SQL code in your <strong>Supabase SQL Editor</strong>:
+                        </p>
+                        <div className="relative">
+                          <pre className="p-3 bg-slate-900 text-[10px] text-slate-300 font-mono rounded-lg overflow-x-auto max-h-48 whitespace-pre leading-normal border border-slate-800">
+                            {sqlScript.replace(/\\n/g, '\n')}
+                          </pre>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(sqlScript.replace(/\\n/g, '\n'));
+                              setCopiedSql(true);
+                              setTimeout(() => setCopiedSql(false), 2000);
+                            }}
+                            className="absolute top-2 right-2 px-2.5 py-1 bg-white/10 hover:bg-white/20 active:scale-95 text-white rounded text-[10px] font-bold flex items-center gap-1 transition-all"
+                          >
+                            {copiedSql ? (
+                              <>
+                                <Check className="w-3 h-3 text-emerald-400" />
+                                Copied!
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                Copy SQL
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2 pt-2 border-t border-slate-50">
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={isDeletingAccount || deleteConfirmText.trim().toUpperCase() !== "DELETE"}
+                  className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-[10px] uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-md shadow-rose-500/10 disabled:opacity-40"
+                >
+                  {isDeletingAccount ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Decomissioning...
+                    </>
+                  ) : (
+                    "Confirm Account Deletion"
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowConfirmDelete(false);
+                    setDeleteError(null);
+                    setShowSqlInstruction(false);
+                    setDeleteConfirmText("");
+                  }}
+                  disabled={isDeletingAccount}
+                  className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-extrabold text-[10px] uppercase tracking-wider rounded-xl transition-all border border-slate-200/50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

@@ -163,14 +163,36 @@ export const proService = {
     console.log('[proService] Current user:', session?.user?.email || 'Anonymous');
 
     // Diagnostic: Check if record exists before update and get its current state to see columns
-    const { data: existingRecord, error: checkError } = await supabase
-      .from('professionals')
-      .select('*')
-      .eq('id', finalId)
-      .maybeSingle();
+    let existingRecord = null;
+    let checkError = null;
+    
+    try {
+      const { data, error } = await supabase
+        .from('professionals')
+        .select('*')
+        .eq('id', finalId)
+        .maybeSingle();
+      existingRecord = data;
+      checkError = error;
+    } catch (e: any) {
+      console.error('[proService] Exception during update check:', e);
+      if (e.code === '22P02' || (e.message && e.message.includes('bigint'))) {
+         return { 
+           success: false, 
+           message: `Update failed: The ID "${id}" is not compatible with the database bigint type.` 
+         };
+      }
+      throw e;
+    }
     
     if (checkError) {
       console.error('[proService] Error fetching existing record:', checkError);
+      if (checkError.code === '22P02') {
+         return { 
+           success: false, 
+           message: `Update failed: The ID "${id}" is not compatible with the database bigint type.` 
+         };
+      }
     }
     
     if (!existingRecord) {
@@ -309,20 +331,45 @@ export const proService = {
     console.log('[proService] deleteProfessional requested for ID:', id);
 
     let finalId = id;
-    // Check if it's a numeric string and convert to number if it's not a UUID
+    const isUuid = typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    
+    // Check if it's a numeric string and convert to number if it's NOT a UUID
     if (typeof id === 'string' && /^\d+$/.test(id)) {
       finalId = parseInt(id, 10);
+      console.log('[proService] Normalized numeric string ID to number:', finalId);
+    } else if (isUuid) {
+      console.log('[proService] ID is a UUID:', id);
     }
 
     // 1. Fetch current data for archiving
-    const { data: proToArchive, error: fetchError } = await supabase
-      .from('professionals')
-      .select('*')
-      .eq('id', finalId)
-      .maybeSingle();
+    // Use a try-catch for the fetch because eq() on bigint with uuid string will throw 22P02
+    let proToArchive = null;
+    let fetchError = null;
+
+    try {
+      const { data, error } = await supabase
+        .from('professionals')
+        .select('*')
+        .eq('id', finalId)
+        .maybeSingle();
+      
+      proToArchive = data;
+      fetchError = error;
+    } catch (e: any) {
+      console.error('[proService] Exception during fetch for archive:', e);
+      // If we got a type mismatch (22P02), it means this ID definitely doesn't exist in the bigint column
+      if (e.code === '22P02' || (e.message && e.message.includes('bigint'))) {
+         throw new Error(`Deletion failed: The ID "${id}" is a UUID, but the professionals table uses BigInt (numeric) IDs. This professional record cannot be found in the active directory.`);
+      }
+      throw e;
+    }
 
     if (fetchError) {
       console.error('[proService] Error fetching pro for archive:', fetchError);
+      // If it's a type mismatch error (22P02 in Postgres), provide a clearer message
+      if (fetchError.code === '22P02' || fetchError.message?.includes('bigint')) {
+        throw new Error(`Failed to fetch professional: The ID format "${finalId}" does not match the database type (expected BigInt).`);
+      }
       throw new Error(`Failed to fetch professional before deletion: ${fetchError.message}`);
     }
 
@@ -376,14 +423,24 @@ export const proService = {
     }
 
     // 3. Delete from original table
-    const { error: deleteError } = await supabase
-      .from('professionals')
-      .delete()
-      .eq('id', finalId);
+    try {
+      const { error: deleteError } = await supabase
+        .from('professionals')
+        .delete()
+        .eq('id', finalId);
 
-    if (deleteError) {
-      console.error('[proService] Supabase delete ERROR:', deleteError);
-      throw new Error(`Deletion failed: ${deleteError.message}`);
+      if (deleteError) {
+        console.error('[proService] Supabase delete ERROR:', deleteError);
+        if (deleteError.code === '22P02' || deleteError.message?.includes('bigint')) {
+          throw new Error(`Deletion failed: The professional was successfully archived to 'deleted_professionals', but cannot be deleted from the active directory. This happens because of a trigger or constraint check comparing this UUID ID "${finalId}" to a BigInt column (such as 'testimonies.pro_id'). Please alter your relations/triggers in Supabase SQL Editor.`);
+        }
+        throw new Error(`Deletion failed: ${deleteError.message}`);
+      }
+    } catch (e: any) {
+      if (e.code === '22P02' || (e.message && e.message.includes('bigint'))) {
+        throw new Error(`Deletion failed: The professional was successfully archived to 'deleted_professionals', but cannot be deleted from the active directory. This happens because of a trigger or constraint check comparing this UUID ID "${finalId}" to a BigInt column (such as 'testimonies.pro_id'). Please alter your relations/triggers in Supabase SQL Editor.`);
+      }
+      throw e;
     }
     
     console.log('[proService] Deletion successful for ID:', finalId);
