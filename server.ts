@@ -69,7 +69,14 @@ Review the list of professionals provided and rank them based on:
 
 Assign a match score from 0 to 100 for each. Include any professional that has a match score above 0. If a professional doesn't match at all, you may omit them or output score as 0.
 Under "reasonUrlExcerpt", write a single, user-friendly matching explanation in English (1 concise sentence maximum) suitable to be displayed inside a badge on their profile.
-Example reasonUrlExcerpt: "Recommended for your painting project thanks to 12 years of experience" or "Bilingual tax advisor ideal for your autonomo setup".`;
+Example reasonUrlExcerpt: "Recommended for your painting project thanks to 12 years of experience" or "Bilingual tax advisor ideal for your autonomo setup".
+
+You MUST return a JSON array of objects where each object contains:
+- "id": (string) The professional's ID.
+- "score": (integer) The relevancy match score from 0 to 100.
+- "reasonUrlExcerpt": (string) Engaging explanation in English explaining why they matched.
+
+Return only the raw JSON.`;
  
       const response = await getAiClient().models.generateContent({
         model: "gemini-3.5-flash",
@@ -79,19 +86,7 @@ Professionals:
 ${JSON.stringify(proListBrief, null, 2)}`,
         config: {
           systemInstruction: sysInstruction,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                id: { type: Type.STRING, description: "The professional's ID as a string" },
-                score: { type: Type.INTEGER, description: "The relevancy match score from 0 to 100" },
-                reasonUrlExcerpt: { type: Type.STRING, description: "Highly engaging, concise explanation in English explaining why this pro is matched." }
-              },
-              required: ["id", "score", "reasonUrlExcerpt"]
-            }
-          }
+          responseMimeType: "application/json"
         }
       });
 

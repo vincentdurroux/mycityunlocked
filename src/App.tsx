@@ -607,7 +607,7 @@ export default function App() {
 
   const mainRef = useRef<HTMLElement>(null);
   const { professionals: allPros, loading: prosLoading, refetch: refetchPros } = useProfessionals([]);
-  const [activeView, setActiveView] = useState<View>('home');
+  const [activeView, setActiveView] = useState<View>('login');
   const [previousView, setPreviousView] = useState<View>('home');
   const [authLoading, setAuthLoading] = useState(true);
   const [initialEventId, setInitialEventId] = useState<string | null>(null);
@@ -1095,7 +1095,7 @@ export default function App() {
     setIsUploading(true);
     
     try {
-      const uploadPromises = filesToUpload.map(async (file) => {
+      const uploadPromises = (filesToUpload as File[]).map(async (file: File) => {
         // Sanitize filename
         const sanitizedName = file.name
           .normalize('NFD')
@@ -1427,7 +1427,6 @@ export default function App() {
                 className={activeView === 'home' ? 'block w-full' : 'hidden w-full'}
               >
                 <HomeView 
-                  key="home" 
                   allPros={allPros}
                   events={events}
                   onNavigate={handleNavigate}
@@ -1479,7 +1478,6 @@ export default function App() {
               </motion.div>
               {activeView === 'events' && (
                 <EventsView 
-                  key="events" 
                   initialEventId={initialEventId}
                   onModalClose={() => setInitialEventId(null)}
                   scrollToTop={scrollToTop}
@@ -1488,7 +1486,6 @@ export default function App() {
               )}
               {activeView === 'guides' && (
                 <GuidesView 
-                  key="guides" 
                   initialGuideId={initialGuideId}
                   onModalClose={() => setInitialGuideId(null)}
                   scrollToTop={scrollToTop}
@@ -1496,7 +1493,6 @@ export default function App() {
               )}
               {activeView === 'profile' && (
                 <ProfileView 
-                  key="profile" 
                   scrollToTop={scrollToTop}
                   onNavigate={handleNavigate}
                   currentUser={currentUser}
@@ -1509,7 +1505,6 @@ export default function App() {
               )}
               {activeView === 'login' && (
                 <LoginView 
-                  key="login"
                   onBack={() => navigateTo('home')}
                   onLoginSuccess={() => navigateTo('home')}
                   onSetUser={setCurrentUser}
@@ -1519,7 +1514,6 @@ export default function App() {
 
               {activeView === 'complete-profile' && (
                 <ProfileSetupView
-                  key="complete-profile"
                   currentUser={currentUser}
                   onComplete={(profile) => {
                     setUserProfile(profile);
@@ -1529,7 +1523,6 @@ export default function App() {
               )}
               {activeView === 'admin' && (
                 <AdminView 
-                  key="admin" 
                   onRefetchPros={refetchPros}
                   scrollToTop={scrollToTop}
                   currentUser={currentUser}
@@ -1559,7 +1552,6 @@ export default function App() {
               )}
               {activeView === 'marketplace' && (
                 <MarketplaceView 
-                  key="marketplace" 
                   onAddAd={() => setShowAddAd(true)} 
                   ads={ads} 
                   onSelectAd={setSelectedAd} 
@@ -1568,7 +1560,6 @@ export default function App() {
               )}
               {activeView === 'messages' && (
                 <MessagesView 
-                  key="messages" 
                   scrollToTop={scrollToTop} 
                   initialChat={initialChat}
                   onClearInitial={() => setInitialChat(null)}
@@ -2058,7 +2049,6 @@ export default function App() {
         <AnimatePresence>
           {selectedAd && (
             <AdDetailModal 
-              key="ad-detail-modal"
               ad={selectedAd} 
               onClose={() => setSelectedAd(null)} 
             />
@@ -2392,7 +2382,7 @@ function AdDetailModal({ ad, onClose }: { ad: Ad | any, onClose: () => void }) {
 );
 }
 
-function RecommendationItem({ rec, onUpdate, onStartAdding }: { rec: any, onUpdate: () => void, onStartAdding: (rec: any) => void }) {
+function RecommendationItem({ rec, onUpdate, onStartAdding }: { rec: any, onUpdate: () => void, onStartAdding: (rec: any) => void, key?: any }) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showRefuseForm, setShowRefuseForm] = useState(false);
   const [refuseReason, setRefuseReason] = useState(rec.admin_notes || '');
@@ -5988,8 +5978,10 @@ function LoginView({ onBack, onLoginSuccess, onSetUser, currentUser }: { onBack:
     }
   };
 
+  const [showEmailForm, setShowEmailForm] = useState(false);
+
   return (
-    <div className="flex-1 flex flex-col min-h-full bg-white relative">
+    <div className="flex-1 flex flex-col min-h-full bg-slate-50/40 relative">
       {/* Decorative Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-[10%] -right-[10%] w-[40%] h-[40%] bg-brand-blue/5 rounded-full blur-3xl animate-float" />
@@ -5997,39 +5989,47 @@ function LoginView({ onBack, onLoginSuccess, onSetUser, currentUser }: { onBack:
         <div className="absolute bottom-[10%] right-[5%] w-[25%] h-[25%] bg-brand-blue/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '-10s' }} />
       </div>
 
-      <div className="relative flex-1 flex flex-col items-center justify-center pt-24 px-6 pb-8 md:pt-6 min-h-screen">
-        {/* Back Button to Landing Page */}
-        <button 
-          onClick={onBack}
-          className="absolute top-6 left-6 md:top-8 md:left-8 text-slate-400 hover:text-slate-700 transition-all active:scale-95 group flex items-center gap-2 z-25 cursor-pointer"
-          title="Back to home"
-          type="button"
-        >
-          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-          <span className="text-xs font-bold uppercase tracking-wider">Back</span>
-        </button>
+      <div className="relative flex-1 flex flex-col items-center justify-center pt-16 px-5 pb-8 min-h-screen">
+        {/* Back Button to choices when in email form */}
+        {showEmailForm && (
+          <button 
+            onClick={() => { setShowEmailForm(false); setStep('email'); setMessage(null); }}
+            className="absolute top-6 left-6 md:top-8 md:left-8 text-slate-400 hover:text-slate-600 transition-all active:scale-95 group flex items-center gap-2 z-25 cursor-pointer"
+            title="Back to choices"
+            type="button"
+          >
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+            <span className="text-xs font-normal uppercase tracking-wider">Back</span>
+          </button>
+        )}
 
-        <div className="w-full max-w-sm space-y-10">
+        <div className="w-full max-w-sm space-y-8">
           {/* Logo Section */}
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center text-center space-y-6"
+            className="flex flex-col items-center text-center"
           >
-            <Logo className="scale-110" />
+            <Logo className="scale-115" />
           </motion.div>
 
           {/* Login Card */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="w-full bg-white p-8 md:p-10 rounded-[40px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] relative z-10"
+            transition={{ delay: 0.1 }}
+            className="w-full bg-white p-7 sm:p-9 rounded-[32px] sm:rounded-[40px] border border-slate-100/80 shadow-[0_15px_45px_rgba(51,65,85,0.05)] relative z-10"
           >
-            <div className="text-center space-y-2 mb-10">
-              <h2 className="text-3xl font-bold text-brand-navy tracking-tight">
-                {isNewUser ? "Join Unlocked" : "Sign In"}
+            {/* Header section based on state */}
+            <div className="text-center space-y-3 mb-8">
+              <h2 className="text-3xl font-bold text-slate-800 tracking-tight">
+                {isNewUser ? "Welcome!" : "Welcome back!"}
               </h2>
+              <p className="text-slate-400 font-normal text-xs sm:text-[13px] leading-relaxed max-w-xs mx-auto">
+                {isNewUser 
+                  ? "Sign up to continue discovering and connecting with trusted local pros." 
+                  : "Sign in to continue discovering and connecting with trusted local pros."}
+              </p>
             </div>
 
             {message && (
@@ -6037,160 +6037,209 @@ function LoginView({ onBack, onLoginSuccess, onSetUser, currentUser }: { onBack:
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={cn(
-                  "p-4 rounded-2xl text-sm font-semibold flex items-center gap-3 mb-8",
+                  "p-4 rounded-2xl text-sm font-normal flex items-center gap-3 mb-6",
                   message.type === 'success' 
                     ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
                     : "bg-rose-50 text-rose-600 border border-rose-100"
                 )}
               >
                 {message.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
-                {message.text}
+                <span className="text-xs sm:text-sm">{message.text}</span>
               </motion.div>
             )}
 
-            <form onSubmit={step === 'email' ? handleContinue : handleAuth} className="space-y-6">
-              {step === 'email' ? (
-                <div className="space-y-2">
-                  <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 px-1">Email Address</label>
-                  <div className="relative group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 group-focus-within:bg-brand-blue/5 transition-colors">
-                      <Mail className={cn(
-                        "w-5 h-5 transition-colors",
-                        email ? "text-brand-blue" : "text-slate-300"
-                      )} />
-                    </div>
-                    <input 
-                      required
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@example.com"
-                      className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl pl-16 pr-4 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 transition-all placeholder:text-slate-300 placeholder:font-medium text-sm"
+            {!showEmailForm ? (
+              /* Welcome Choices Selection State */
+              <div className="space-y-6">
+                
+                {/* 1. Continue with Google */}
+                <button
+                  type="button"
+                  disabled={isLoading}
+                  onClick={handleGoogleLogin}
+                  className="w-full h-14 bg-white hover:bg-slate-50/60 border border-slate-200/90 hover:border-slate-300 text-slate-850 rounded-[24px] font-normal text-sm sm:text-base hover:shadow-xs transition-all disabled:opacity-50 flex items-center justify-center gap-3.5 overflow-hidden active:scale-[0.985] cursor-pointer"
+                >
+                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.68 1.54 14.98 1 12 1 7.35 1 3.37 3.68 1.48 7.58l3.9 3.03C6.31 7.55 8.94 5.04 12 5.04z"
                     />
+                    <path
+                      fill="#4285F4"
+                      d="M23.49 12.27c0-.81-.07-1.59-.2-2.35H12v4.46h6.44c-.28 1.47-1.11 2.72-2.36 3.56l3.66 2.84c2.14-1.97 3.38-4.88 3.38-8.51z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.38 14.45a7.16 7.16 0 0 1 0-4.9l-3.9-3.03a11.96 11.96 0 0 0 0 10.96l3.9-3.03z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c3.24 0 5.97-1.08 7.96-2.91l-3.66-2.84c-1.01.68-2.31 1.09-4.3 1.09-3.06 0-5.69-2.51-6.62-5.57l-3.9 3.03C3.37 20.32 7.35 23 12 23z"
+                    />
+                  </svg>
+                  <span className="font-semibold text-slate-700">Continue with Google</span>
+                </button>
+
+                {/* 2. OR divider */}
+                <div className="relative flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-100"></div>
                   </div>
+                  <span className="relative bg-white px-4 text-[10px] font-normal uppercase tracking-widest text-slate-300">or</span>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between px-1">
-                    <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Password</label>
+
+                {/* 3. Continue with Email */}
+                <button
+                  type="button"
+                  onClick={() => setShowEmailForm(true)}
+                  className="w-full h-14 bg-white hover:bg-slate-50/60 border border-slate-200/90 hover:border-slate-300 text-slate-855 rounded-[24px] font-normal text-sm sm:text-base hover:shadow-xs transition-all flex items-center justify-center gap-3.5 overflow-hidden active:scale-[0.985] cursor-pointer"
+                >
+                  <Mail className="w-5 h-5 text-blue-600/90 flex-shrink-0" />
+                  <span className="font-semibold text-slate-700">Continue with Email</span>
+                </button>
+
+                {/* 4. Continue as Guest */}
+                <div className="pt-2 text-center">
+                  <button 
+                    type="button"
+                    onClick={onBack}
+                    className="inline-flex flex-col items-center justify-center hover:opacity-85 transition-all group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 text-blue-600/95 font-medium text-[13.5px]">
+                      <User className="w-4 h-4 stroke-[2px]" />
+                      <span>Continue as Guest</span>
+                    </div>
+                    <span className="text-[10.5px] text-slate-400 font-normal mt-1 leading-tight">Explore the app without an account.</span>
+                  </button>
+                </div>
+
+                {/* Separator line & Bottom Toggle */}
+                <div className="border-t border-slate-100/80 pt-6">
+                  <div className="text-center">
                     <button 
                       type="button"
-                      onClick={() => setStep('email')}
-                      className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-blue hover:underline"
+                      onClick={() => {
+                        setIsNewUser(!isNewUser);
+                        if (message) setMessage(null);
+                      }}
+                      className="text-xs sm:text-sm font-normal text-slate-400 hover:text-slate-600 transition-colors"
                     >
-                      Change email
-                    </button>
-                  </div>
-                  <div className="relative group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 group-focus-within:bg-brand-blue/5 transition-colors">
-                      <Lock className={cn(
-                        "w-5 h-5 transition-colors",
-                        password ? "text-brand-blue" : "text-slate-300"
-                      )} />
-                    </div>
-                    <input 
-                      required
-                      autoFocus
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl pl-16 pr-14 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 transition-all placeholder:text-slate-300 placeholder:font-medium text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400 hover:text-slate-600"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      {isNewUser ? (
+                        <>Already have an account? <span className="text-blue-600/90 font-medium hover:underline">Sign in</span></>
+                      ) : (
+                        <>Don't have an account? <span className="text-blue-600/90 font-medium hover:underline">Sign up</span></>
+                      )}
                     </button>
                   </div>
                 </div>
-              )}
 
-              <div className="flex items-center px-1">
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <div className="relative flex items-center justify-center">
-                    <input 
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="peer appearance-none w-5 h-5 border border-slate-200 rounded-[6px] bg-slate-50 checked:bg-brand-blue checked:border-brand-blue transition-all cursor-pointer"
-                    />
-                    <Check className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-[3]" />
-                  </div>
-                  <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-600 transition-colors select-none">Stay logged in</span>
-                </label>
               </div>
+            ) : (
+              /* Email Credentials Input State */
+              <form onSubmit={step === 'email' ? handleContinue : handleAuth} className="space-y-5 animate-in fade-in duration-200">
+                {step === 'email' ? (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-slate-400 px-1">Email Address</label>
+                    <div className="relative group">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 group-focus-within:bg-brand-blue/5 transition-colors">
+                        <Mail className={cn(
+                          "w-5 h-5 transition-colors",
+                          email ? "text-brand-blue" : "text-slate-300"
+                        )} />
+                      </div>
+                      <input 
+                        required
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="name@example.com"
+                        className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl pl-16 pr-4 font-normal text-slate-700 focus:outline-none focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue/20 transition-all placeholder:text-slate-300 placeholder:font-normal text-sm"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between px-1">
+                      <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-slate-400">Password</label>
+                      <button 
+                        type="button"
+                        onClick={() => setStep('email')}
+                        className="text-[10px] font-medium uppercase tracking-wider text-brand-blue hover:underline"
+                      >
+                        Change email
+                      </button>
+                    </div>
+                    <div className="relative group">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 group-focus-within:bg-brand-blue/5 transition-colors">
+                        <Lock className={cn(
+                          "w-5 h-5 transition-colors",
+                          password ? "text-brand-blue" : "text-slate-300"
+                        )} />
+                      </div>
+                      <input 
+                        required
+                        autoFocus
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl pl-16 pr-14 font-normal text-slate-700 focus:outline-none focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue/20 transition-all placeholder:text-slate-300 placeholder:font-normal text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400 hover:text-slate-600"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-              <button 
-                disabled={isLoading}
-                type="submit"
-                className="w-full h-14 bg-brand-blue text-white rounded-2xl font-semibold text-sm uppercase tracking-widest shadow-xl shadow-brand-blue/20 hover:shadow-2xl hover:shadow-brand-blue/30 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-3 overflow-hidden relative group"
-              >
-                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-                <span className="relative z-10 flex items-center justify-center gap-2">
+                <div className="flex items-center px-1">
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <div className="relative flex items-center justify-center">
+                      <input 
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="peer appearance-none w-5 h-5 border border-slate-200 rounded-[6px] bg-slate-50 checked:bg-brand-blue checked:border-brand-blue transition-all cursor-pointer"
+                      />
+                      <Check className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-[3]" />
+                    </div>
+                    <span className="text-xs font-normal text-slate-400 group-hover:text-slate-500 transition-colors select-none">Stay logged in</span>
+                  </label>
+                </div>
+
+                <button 
+                  disabled={isLoading}
+                  type="submit"
+                  className="w-full h-14 bg-brand-blue border border-transparent text-white rounded-[24px] font-normal text-sm sm:text-base shadow-lg shadow-brand-blue/15 hover:brightness-110 hover:shadow-xl active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2.5 cursor-pointer"
+                >
                   {isLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <>{step === 'email' ? 'Continue' : isNewUser ? 'Sign up' : 'Sign In'} <ArrowRight className="w-4 h-4" /></>
+                    <span className="flex items-center justify-center gap-2">
+                      {step === 'email' ? 'Continue' : isNewUser ? 'Sign up' : 'Sign In'} 
+                      <ArrowRight className="w-4 h-4" />
+                    </span>
                   )}
-                </span>
-              </button>
-
-              <div className="text-center space-y-4">
-                <button 
-                  type="button"
-                  onClick={() => {
-                    setIsNewUser(!isNewUser);
-                    if (message) setMessage(null);
-                    // If we switch to signup, stay on email step to avoid confusion if we were at password
-                    if (!isNewUser) setStep('email');
-                  }}
-                  className="text-xs font-semibold text-slate-400 hover:text-brand-blue transition-colors"
-                >
-                  {isNewUser ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
                 </button>
-              </div>
-            </form>
 
-            <div className="relative my-6 flex items-center justify-center">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-100"></div>
-              </div>
-              <span className="relative bg-white px-4 text-[10px] font-black uppercase tracking-widest text-slate-300">or continue with</span>
-            </div>
-
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={handleGoogleLogin}
-              className="w-full h-14 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700/80 hover:text-slate-900 rounded-2xl font-bold text-xs tracking-widest uppercase hover:shadow transition-all disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-3 overflow-hidden active:scale-[0.98]"
-            >
-              <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
-                <path
-                  fill="#EA4335"
-                  d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.68 1.54 14.98 1 12 1 7.35 1 3.37 3.68 1.48 7.58l3.9 3.03C6.31 7.55 8.94 5.04 12 5.04z"
-                />
-                <path
-                  fill="#4285F4"
-                  d="M23.49 12.27c0-.81-.07-1.59-.2-2.35H12v4.46h6.44c-.28 1.47-1.11 2.72-2.36 3.56l3.66 2.84c2.14-1.97 3.38-4.88 3.38-8.51z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.38 14.45a7.16 7.16 0 0 1 0-4.9l-3.9-3.03a11.96 11.96 0 0 0 0 10.96l3.9-3.03z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c3.24 0 5.97-1.08 7.96-2.91l-3.66-2.84c-1.01.68-2.31 1.09-4.3 1.09-3.06 0-5.69-2.51-6.62-5.57l-3.9 3.03C3.37 20.32 7.35 23 12 23z"
-                />
-              </svg>
-              <span>Google</span>
-            </button>
+                {/* Back Link to choice selection */}
+                <div className="text-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => { setShowEmailForm(false); setStep('email'); }}
+                    className="text-xs font-normal text-slate-400 hover:text-brand-blue/90 cursor-pointer"
+                  >
+                    Use another login method
+                  </button>
+                </div>
+              </form>
+            )}
 
           </motion.div>
-
-
         </div>
       </div>
     </div>
@@ -7850,6 +7899,20 @@ ${JSON.stringify(proListBrief, null, 2)}`,
                   </div>
                 </div>
 
+                {/* Large Purple Recommendations Action Button (moved right after writing field) */}
+                <button 
+                  onClick={handleSearchSubmit}
+                  disabled={aiLoading || !search.trim()}
+                  className="w-full py-4.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:brightness-110 active:scale-[0.98] text-white rounded-[24px] font-bold text-sm md:text-base shadow-lg shadow-violet-500/15 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 cursor-pointer"
+                >
+                  {aiLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-5 h-5 fill-white/10" />
+                  )}
+                  Get Recommendations
+                </button>
+
                 {/* Suggestions Section */}
                 <div className="space-y-2.5 pt-1">
                   <p className="text-xs font-bold text-slate-400 tracking-wide text-left">
@@ -7869,27 +7932,13 @@ ${JSON.stringify(proListBrief, null, 2)}`,
                             inputRef.current?.focus();
                           }, 50);
                         }}
-                        className="text-left px-4 py-3 bg-violet-50/40 hover:bg-violet-50 hover:text-violet-900 border border-violet-100/30 rounded-2xl text-xs font-semibold text-slate-600 transition-all leading-normal active:scale-[0.99]"
+                        className="text-left px-4 py-3 bg-violet-50/40 hover:bg-violet-50 hover:text-violet-900 border border-violet-100/30 rounded-2xl text-xs font-semibold text-slate-600 transition-all leading-normal active:scale-[0.99] cursor-pointer"
                       >
                         {suggestion}
                       </button>
                     ))}
                   </div>
                 </div>
-
-                {/* Large Purple Recommendations Action Button */}
-                <button 
-                  onClick={handleSearchSubmit}
-                  disabled={aiLoading || !search.trim()}
-                  className="w-full py-4.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:brightness-110 active:scale-[0.98] text-white rounded-[24px] font-bold text-sm md:text-base shadow-lg shadow-violet-500/15 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50"
-                >
-                  {aiLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-5 h-5 fill-white/10" />
-                  )}
-                  Get Recommendations
-                </button>
 
                 {/* Privacy Safeguard Note */}
                 <div className="flex items-center justify-center gap-1.5 text-slate-400 font-bold text-[10px] md:text-[11px] tracking-wide pt-1 text-center">
@@ -11462,7 +11511,7 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
   );
 }
 
-function ProfileSubPage({ title, onBack, children, className }: { title: string, onBack: () => void, children: React.ReactNode, className?: string }) {
+function ProfileSubPage({ title, onBack, children, className }: { title: string, onBack: () => void, children: React.ReactNode, className?: string, key?: string }) {
   return (
     <motion.div
       initial={{ x: '100%' }}
