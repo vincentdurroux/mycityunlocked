@@ -3619,7 +3619,7 @@ function AdminView({
             )}
           >
             <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span className="truncate">Spotlight</span>
+            <span className="truncate">Highlights</span>
           </button>
           <button 
             onClick={() => {
@@ -10233,6 +10233,10 @@ function GuidesView({ initialGuideId, onModalClose, scrollToTop }: { initialGuid
         )}
       </div>
 
+      <div className="text-center pt-4">
+        <p className="text-slate-400 text-sm font-medium italic">More articles to come...</p>
+      </div>
+
 
 
       {/* Article Modal */}
@@ -10521,6 +10525,7 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   
   const [selectedDocKey, setSelectedDocKey] = useState<string | null>(null);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [docContent, setDocContent] = useState<string>('');
   const [docTitle, setDocTitle] = useState<string>('');
   const [isLoadingDoc, setIsLoadingDoc] = useState(false);
@@ -10758,7 +10763,6 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
     { label: 'Suggest a Pro', icon: Star, color: 'text-brand-yellow', action: () => onAddPro?.() },
     { label: 'Feedback', icon: MessageSquare, color: 'text-[#00C2A8]' },
     { label: 'Settings', icon: SlidersHorizontal },
-    { label: 'Support', icon: HelpCircle },
     { label: 'About', icon: Info },
   ];
 
@@ -11411,40 +11415,7 @@ function ProfileView({ scrollToTop, onNavigate, currentUser, userProfile, onProf
           </ProfileSubPage>
         )}
 
-        {activeSubPage === 'Support' && (
-          <ProfileSubPage key="subpage-support" title="Support" onBack={() => setActiveSubPage(null)}>
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 gap-4">
-                <a 
-                  href="mailto:hello.unlockd@gmail.com"
-                  className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:border-brand-blue/30 transition-all w-full"
-                >
-                  <div className="w-12 h-12 bg-brand-blue/5 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-6 h-6 text-brand-blue" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-bold text-slate-900 text-lg">Email Us</p>
-                    <p className="text-sm text-slate-500">hello.unlockd@gmail.com</p>
-                  </div>
-                </a>
-              </div>
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <p className="p-6 font-bold text-slate-900 border-b border-slate-50">Frequently Asked Questions</p>
-                {[
-                  'How do I book a professional?',
-                  'What is the cancellation policy?',
-                  'How can I list an item in marketplace?',
-                  'Is my payment secure?'
-                ].map((q, i) => (
-                  <button key={i} className="w-full p-6 flex justify-between items-center hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
-                    <span className="text-sm font-medium text-slate-700">{q}</span>
-                    <ChevronRight className="w-4 h-4 text-slate-300" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </ProfileSubPage>
-        )}
+
 
         {activeSubPage === 'About' && (
           <ProfileSubPage key="subpage-about" title="About Unlocked" onBack={() => setActiveSubPage(null)} className="bg-white">
