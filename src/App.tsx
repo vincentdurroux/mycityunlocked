@@ -6317,7 +6317,7 @@ function HomeView({
       >
         <div className="space-y-1 flex flex-col items-center md:items-start w-full">
           <h2 className="text-[28px] md:text-[36px] font-semibold font-display text-brand-navy flex items-center gap-3">
-            <span>{currentUser ? `Hello, ${userProfile?.full_name ? userProfile.full_name.split(' ')[0] : 'Explorer'}!` : 'Hello,'}</span>
+            <span>{currentUser ? `Hello, ${userProfile?.full_name ? userProfile.full_name.split(' ')[0] : 'Explorer'}!` : 'Hello Guest'}</span>
             {unreadConversations.length > 0 && (
               <motion.button
                 initial={{ opacity: 0, x: -10 }}
