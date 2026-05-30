@@ -7343,7 +7343,10 @@ function ExploreView({ allPros, onNavigate, initialProId, initialSearch, onModal
     }
 
     setIsInputFocused(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const mainContainer = document.querySelector('main');
+    if (mainContainer) {
+      mainContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     
     setIsSearching(true);
     setAiLoading(true);
@@ -7472,12 +7475,17 @@ ${JSON.stringify(proListBrief, null, 2)}`,
   useEffect(() => {
     if (aiResults && !aiLoading) {
       const timer = setTimeout(() => {
+        const mainContainer = document.querySelector('main');
         const resultsEl = document.getElementById("pro-cards-list");
-        if (resultsEl) {
-          resultsEl.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
+        if (mainContainer && resultsEl) {
+          const containerRect = mainContainer.getBoundingClientRect();
+          const targetRect = resultsEl.getBoundingClientRect();
+          const offset = targetRect.top - containerRect.top + mainContainer.scrollTop;
+          mainContainer.scrollTo({
+            top: Math.max(0, offset - 16),
+            behavior: "smooth"
           });
+          window.scrollTo(0, 0);
         }
       }, 350);
       return () => clearTimeout(timer);
@@ -7518,23 +7526,18 @@ ${JSON.stringify(proListBrief, null, 2)}`,
 
   const scrollToPro = (pro: Professional) => {
     const element = document.getElementById(`pro-card-${pro.id}`);
-    if (element) {
-      // Use a more robust scrolling method for mobile compatibility
-      const headerOffset = 80;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-      window.scrollTo({
-        top: offsetPosition,
+    const mainContainer = document.querySelector('main');
+    if (element && mainContainer) {
+      const containerRect = mainContainer.getBoundingClientRect();
+      const targetRect = element.getBoundingClientRect();
+      const offset = targetRect.top - containerRect.top + mainContainer.scrollTop;
+      
+      const targetScrollTop = offset - (containerRect.height / 2) + (targetRect.height / 2);
+      mainContainer.scrollTo({
+        top: Math.max(0, targetScrollTop),
         behavior: 'smooth'
       });
-
-      // Also try scrollIntoView as a secondary measure if supported
-      try {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } catch (e) {
-        console.warn('scrollIntoView failed, relying on window.scrollTo');
-      }
+      window.scrollTo(0, 0);
 
       // Add a temporary highlight effect
       element.classList.add('ring-4', 'ring-brand-blue/40', 'scale-[1.02]', 'z-20');
@@ -7556,6 +7559,10 @@ ${JSON.stringify(proListBrief, null, 2)}`,
   const [maxDistance, setMaxDistance] = useState<number | 'All'>('All');
 
   useEffect(() => {
+    const mainContainer = document.querySelector('main');
+    if (mainContainer) {
+      mainContainer.scrollTo(0, 0);
+    }
     window.scrollTo(0, 0);
   }, [selectedPro]);
 
@@ -7720,7 +7727,18 @@ ${JSON.stringify(proListBrief, null, 2)}`,
                         if (e.key === 'Enter') {
                           setDeferredSearch(search);
                           if (checkMatches(search)) {
-                            document.getElementById('pro-cards-list')?.scrollIntoView({ behavior: 'smooth' });
+                            const mainContainer = document.querySelector('main');
+                            const resultsEl = document.getElementById('pro-cards-list');
+                            if (mainContainer && resultsEl) {
+                              const containerRect = mainContainer.getBoundingClientRect();
+                              const targetRect = resultsEl.getBoundingClientRect();
+                              const offset = targetRect.top - containerRect.top + mainContainer.scrollTop;
+                              mainContainer.scrollTo({
+                                top: Math.max(0, offset - 16),
+                                behavior: "smooth"
+                              });
+                              window.scrollTo(0, 0);
+                            }
                           }
                         }
                       }}
@@ -7733,7 +7751,18 @@ ${JSON.stringify(proListBrief, null, 2)}`,
                   onClick={() => {
                     setDeferredSearch(search);
                     if (checkMatches(search)) {
-                      document.getElementById('pro-cards-list')?.scrollIntoView({ behavior: 'smooth' });
+                      const mainContainer = document.querySelector('main');
+                      const resultsEl = document.getElementById('pro-cards-list');
+                      if (mainContainer && resultsEl) {
+                        const containerRect = mainContainer.getBoundingClientRect();
+                        const targetRect = resultsEl.getBoundingClientRect();
+                        const offset = targetRect.top - containerRect.top + mainContainer.scrollTop;
+                        mainContainer.scrollTo({
+                          top: Math.max(0, offset - 16),
+                          behavior: "smooth"
+                        });
+                        window.scrollTo(0, 0);
+                      }
                     }
                   }}
                   className="w-full py-4.5 bg-brand-blue hover:brightness-115 active:scale-[0.98] text-white rounded-[24px] font-bold text-sm md:text-base shadow-lg shadow-brand-blue/15 transition-all flex items-center justify-center gap-2.5"
