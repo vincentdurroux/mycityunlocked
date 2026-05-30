@@ -9760,6 +9760,7 @@ function EventsView({ initialEventId, onModalClose, scrollToTop, events: propEve
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [events, setEvents] = useState<Event[]>(propEvents && propEvents.length > 0 ? propEvents : (isSupabaseConfigured ? [] : MOCK_EVENTS));
   const [loading, setLoading] = useState(!propEvents || propEvents.length === 0);
+  const [sharedEventId, setSharedEventId] = useState<string | null>(null);
 
   useEffect(() => {
     // Only fetch if not provided via props or if they're empty and we're configured
@@ -9825,9 +9826,46 @@ function EventsView({ initialEventId, onModalClose, scrollToTop, events: propEve
                   </p>
                 )}
               </div>
-              <div className="absolute top-4 right-4 bg-black/50 backdrop-blur text-white p-2 rounded-full">
-                <Share2 className="w-4 h-4" />
-              </div>
+              <button 
+                type="button"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  const shareUrl = `${window.location.origin}${window.location.pathname}?eventId=${event.id}`;
+                  const shareData = {
+                    title: event.title,
+                    text: event.description || `Check out this event: ${event.title}!`,
+                    url: shareUrl
+                  };
+                  
+                  if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                    try {
+                      await navigator.share(shareData);
+                    } catch (err) {
+                      console.warn('Share sheets failed or cancelled:', err);
+                    }
+                  } else {
+                    try {
+                      await navigator.clipboard.writeText(shareUrl);
+                      setSharedEventId(event.id);
+                      setTimeout(() => setSharedEventId(null), 2000);
+                    } catch (err) {
+                      console.error('Failed to copy share link:', err);
+                    }
+                  }
+                }}
+                className={`absolute top-4 right-4 p-2 rounded-full backdrop-blur transition-all duration-300 z-10 ${
+                  sharedEventId === event.id 
+                    ? "bg-emerald-500 text-white scale-110 shadow-lg shadow-emerald-500/20" 
+                    : "bg-black/50 hover:bg-black/75 hover:scale-105 active:scale-90 text-white"
+                }`}
+                title="Share event"
+              >
+                {sharedEventId === event.id ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Share2 className="w-4 h-4" />
+                )}
+              </button>
             </div>
             <div className="p-4 space-y-3">
               <div className="flex justify-between items-start">
