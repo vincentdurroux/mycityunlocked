@@ -7743,6 +7743,20 @@ ${JSON.stringify(proListBrief, null, 2)}`,
                         }
                       }}
                     />
+                    {search && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearch('');
+                          setDeferredSearch('');
+                          inputRef.current?.focus();
+                        }}
+                        className="p-1 text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0 cursor-pointer"
+                        title="Reset search"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -7899,9 +7913,25 @@ ${JSON.stringify(proListBrief, null, 2)}`,
                   <div className="flex items-start gap-3">
                     <Sparkles className="w-5 h-5 text-violet-500 mt-0.5 flex-shrink-0" />
                     <div className="flex-1 space-y-1">
-                      <label className="block text-[10px] sm:text-[11px] font-extrabold text-violet-500 uppercase tracking-wider">
-                        Tell Jane about your situation...
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[10px] sm:text-[11px] font-extrabold text-violet-500 uppercase tracking-wider">
+                          Tell Jane about your situation...
+                        </label>
+                        {search && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSearch('');
+                              setDeferredSearch('');
+                              inputRef.current?.focus();
+                            }}
+                            className="p-1 text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0 cursor-pointer"
+                            title="Reset search"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                       <textarea 
                         ref={inputRef as any}
                         rows={3}
@@ -8134,8 +8164,14 @@ ${JSON.stringify(proListBrief, null, 2)}`,
                 </div>
                 {!hasActiveFilter ? (
                   <div className="space-y-2">
-                    <p className="text-slate-900 font-bold text-2xl">Start your search</p>
-                    <p className="text-slate-400 max-w-md mx-auto font-medium">Use the search bar or filters above to find the best local professionals recommended by the community.</p>
+                    <p className="text-slate-900 font-bold text-2xl">
+                      {searchMode === 'ai' ? "Ask Jane for recommendations" : "Start your search"}
+                    </p>
+                    <p className="text-slate-400 max-w-md mx-auto font-medium">
+                      {searchMode === 'ai' 
+                        ? "Tell Jane what you need in natural language, and she will find the perfect community-recommended matches for you." 
+                        : "Use the search bar or filters above to find the best local professionals recommended by the community."}
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
