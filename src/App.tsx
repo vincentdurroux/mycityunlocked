@@ -6023,7 +6023,7 @@ function LoginView({ onBack, onLoginSuccess, onSetUser, currentUser }: { onBack:
             {/* Header section based on state */}
             <div className="text-center space-y-3 mb-8">
               <h2 className="text-3xl font-bold text-slate-800 tracking-tight">
-                Welcome!
+                {isNewUser ? "Welcome!" : "Welcome back!"}
               </h2>
               <p className="text-slate-400 font-normal text-xs sm:text-[13px] leading-relaxed max-w-xs mx-auto">
                 {isNewUser 
@@ -6317,17 +6317,7 @@ function HomeView({
       >
         <div className="space-y-1 flex flex-col items-center md:items-start w-full">
           <h2 className="text-[28px] md:text-[36px] font-semibold font-display text-brand-navy flex items-center gap-3">
-            <span>
-              {currentUser ? (
-                <>
-                  Hello, <span className="text-brand-blue">{userProfile?.full_name ? userProfile.full_name.split(' ')[0] : 'Explorer'}!</span>
-                </>
-              ) : (
-                <>
-                  Hello <span className="text-brand-blue">Guest</span>
-                </>
-              )}
-            </span>
+            <span>{currentUser ? `Hello, ${userProfile?.full_name ? userProfile.full_name.split(' ')[0] : 'Explorer'}!` : 'Hello, Guest!'}</span>
             {unreadConversations.length > 0 && (
               <motion.button
                 initial={{ opacity: 0, x: -10 }}
